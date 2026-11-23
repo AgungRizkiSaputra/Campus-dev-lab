@@ -36,7 +36,7 @@ interface ProjectDocument {
   uploadedAt: string;
 }
 
-export default function DocumentPortalPage() {
+export default function DocumentCenterPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -58,92 +58,93 @@ export default function DocumentPortalPage() {
       name: 'Draf_Bab_3_Metodologi_LSTM_v1.docx',
       path: 'milestones/bab3_draft_v1.docx',
       size: '1.8 MB',
-      category: 'FINAL_DELIVERABLE',
-      uploader: 'Dr. Hendra Wijaya',
+      category: 'DRAFT_INITIAL',
+      uploader: 'Tim Jokiskripsiku',
       role: 'seller',
-      uploadedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      uploadedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     },
     {
       id: 'doc-3',
-      name: 'Laporan_Turnitin_Bab_3_Similarity_9persen.pdf',
-      path: 'plagiarism/turnitin_bab3_9pct.pdf',
+      name: 'Hasil_Uji_Turnitin_Bab3_Sim_9persen.pdf',
+      path: 'turnitin/turnitin_bab3_report.pdf',
       size: '850 KB',
       category: 'PLAGIARISM_REPORT',
-      uploader: 'Dr. Hendra Wijaya',
+      uploader: 'Tim Jokiskripsiku',
       role: 'seller',
-      uploadedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      uploadedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     },
   ]);
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [fileName, setFileName] = useState('');
-  const [category, setCategory] = useState<'BRIEF' | 'DRAFT_INITIAL' | 'REVISION' | 'FINAL_DELIVERABLE' | 'PLAGIARISM_REPORT'>('FINAL_DELIVERABLE');
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [uploadCategory, setUploadCategory] = useState<'DRAFT_INITIAL' | 'REVISION' | 'FINAL_DELIVERABLE' | 'PLAGIARISM_REPORT'>('DRAFT_INITIAL');
+  const [docName, setDocName] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleDownloadSignedUrl = async (doc: ProjectDocument) => {
-    setDownloadingId(doc.id);
+  const handleDownload = async (doc: ProjectDocument) => {
+    toast({
+      type: 'info',
+      title: 'Menyiapkan Unduhan Aman',
+      message: `Mengunduh file terenkripsi ${doc.name}...`,
+    });
+
     try {
       const res = await getSecureDocumentUrlAction(doc.path);
-      if (!res.success || !res.signedUrl) {
+      if (res.success && res.signedUrl) {
+        window.open(res.signedUrl, '_blank');
+      } else {
         toast({
           type: 'error',
           title: 'Akses Ditolak',
-          message: 'Gagal membuat tautan unduhan aman.',
+          message: 'Tautan unduh kedaluwarsa atau tidak memiliki izin akses.',
         });
-        return;
       }
-
-      toast({
-        type: 'info',
-        title: 'Tautan Signed URL Dibangkitkan (15 Menit)',
-        message: 'Tautan unduhan privat aktif selama tepat 15 menit (900 detik).',
-      });
-
-      // Open signed URL in new tab
-      window.open(res.signedUrl, '_blank');
     } catch {
-      toast({ type: 'error', title: 'Kesalahan Sistem', message: 'Gagal mengakses dokumen' });
-    } finally {
-      setDownloadingId(null);
+      toast({ type: 'error', title: 'Kesalahan Sistem', message: 'Gagal mengunduh dokumen' });
     }
   };
 
-  const handleUploadNewDoc = (e: React.FormEvent) => {
+  const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fileName.trim()) return;
+    if (!docName.trim()) return;
 
-    const newDoc: ProjectDocument = {
-      id: `doc-${Date.now()}`,
-      name: fileName,
-      path: `uploads/${fileName}`,
-      size: '1.2 MB',
-      category,
-      uploader: 'Dimas Pratama',
-      role: 'buyer',
-      uploadedAt: new Date().toISOString(),
-    };
+    setIsUploading(true);
+    setTimeout(() => {
+      const newDoc: ProjectDocument = {
+        id: `doc-${Date.now()}`,
+        name: docName.endsWith('.pdf') || docName.endsWith('.docx') ? docName : `${docName}.docx`,
+        path: `milestones/${docName}`,
+        size: '1.5 MB',
+        category: uploadCategory,
+        uploader: 'Tim Jokiskripsiku',
+        role: 'seller',
+        uploadedAt: new Date().toISOString(),
+      };
 
-    setDocuments((prev) => [newDoc, ...prev]);
-    setIsUploadOpen(false);
-    setFileName('');
+      setDocuments((prev) => [newDoc, ...prev]);
+      setIsUploading(false);
+      setIsUploadOpen(false);
+      setDocName('');
 
-    toast({
-      type: 'success',
-      title: 'Dokumen Berhasil Diunggah',
-      message: 'File telah dienkripsi AES-256 dan disimpan dalam bucket privat.',
-    });
+      toast({
+        type: 'success',
+        title: 'Dokumen Berhasil Diunggah',
+        message: 'File telah terenkripsi dan tersedia untuk diunduh mahasiswa.',
+      });
+    }, 1000);
   };
 
-  const getCategoryBadge = (cat: string) => {
+  const getCategoryBadge = (cat: ProjectDocument['category']) => {
     switch (cat) {
-      case 'PLAGIARISM_REPORT':
-        return <Badge variant="forest">Turnitin Report</Badge>;
-      case 'FINAL_DELIVERABLE':
-        return <Badge variant="gold">Draf Bab Final</Badge>;
       case 'BRIEF':
-        return <Badge variant="gray">Pedoman / Brief</Badge>;
+        return <Badge variant="gray">Panduan / Bahan</Badge>;
+      case 'DRAFT_INITIAL':
+        return <Badge variant="forest">Draf Pengerjaan</Badge>;
       case 'REVISION':
-        return <Badge variant="burgundy">Revisi Dosen</Badge>;
+        return <Badge variant="warning">Revisi Draf</Badge>;
+      case 'FINAL_DELIVERABLE':
+        return <Badge variant="success">Hasil Akhir ACC</Badge>;
+      case 'PLAGIARISM_REPORT':
+        return <Badge variant="burgundy">Uji Turnitin Resmi</Badge>;
       default:
         return <Badge variant="gray">{cat}</Badge>;
     }
@@ -155,75 +156,77 @@ export default function DocumentPortalPage() {
         href={`/buyer/projects/${projectId}`}
         className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-forest-800"
       >
-        <ArrowLeft className="h-4 w-4" /> Kembali ke Detail Proyek
+        <ArrowLeft className="h-4 w-4" /> Kembali ke Detail Pesanan
       </Link>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900">
-              Portal Dokumen Skripsi Terenkripsi
+              Pusat Dokumen &amp; Hasil Uji Turnitin
             </h1>
-            <Badge variant="forest">AES-256 RLS</Badge>
+            <Badge variant="forest">Terkunci &amp; Aman</Badge>
           </div>
           <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Penyimpanan terisolasi aman untuk draf bab, revisi dosen, dan sertifikat anti-plagiarisme Turnitin.
+            Repositori draf skripsi, sertifikat Turnitin, dan pedoman penulisan terenkripsi untuk Pesanan #{projectId}.
           </p>
         </div>
 
-        <Button variant="primary" size="md" onClick={() => setIsUploadOpen(true)}>
+        <Button variant="primary" size="md" onClick={() => setIsUploadOpen(true)} className="font-bold">
           <Upload className="h-4 w-4 mr-1.5" /> Unggah Dokumen Baru
         </Button>
       </div>
 
-      {/* Security Notice Banner */}
-      <div className="rounded-md bg-forest-50 p-4 border border-forest-100 flex items-start gap-3 text-xs text-gray-700">
-        <Lock className="h-5 w-5 text-forest-700 flex-shrink-0 mt-0.5" />
-        <div className="leading-relaxed">
-          <strong className="text-forest-900 block mb-0.5">Kebijakan Keamanan Dokumen Akademik</strong>
-          Seluruh file tersimpan dalam Private Storage Bucket Supabase dengan enkripsi AES-256. Unduhan menggunakan <strong>Signed URL ber-TTL 15 menit</strong> yang hanya dapat dibangkitkan oleh mahasiswa pemilik proyek atau joki yang ditugaskan.
+      {/* Security Warning Notice */}
+      <div className="rounded-2xl bg-forest-50 p-4 border border-forest-100 flex items-start gap-3">
+        <ShieldCheck className="h-5 w-5 text-forest-700 flex-shrink-0 mt-0.5" />
+        <div className="text-xs text-forest-900 leading-relaxed">
+          <strong className="text-forest-950 block mb-0.5">Jaminan Keamanan &amp; Kerahasiaan Dokumen</strong>
+          Seluruh berkas yang diunggah diproteksi enkripsi private bucket. Akses unduh menggunakan Signed URL temporer berdurasi 60 detik. Turnitin dilakukan dengan mode <em>No-Repository</em> sehingga naskah Anda tidak akan tersimpan di database publik.
         </div>
       </div>
 
       {/* Documents Table */}
-      <Card className="p-0 overflow-hidden shadow-card">
+      <Card className="overflow-hidden border-gray-200 shadow-xs">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Nama Berkas</TableHead>
               <TableHead>Kategori</TableHead>
-              <TableHead>Ukuran</TableHead>
               <TableHead>Pengunggah</TableHead>
               <TableHead>Waktu Unggah</TableHead>
-              <TableHead className="text-right">Akses Unduh</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {documents.map((doc) => (
               <TableRow key={doc.id}>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-forest-800 flex-shrink-0" />
-                    <span className="font-semibold text-gray-900 text-xs truncate max-w-xs">{doc.name}</span>
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-muted text-forest-900">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-900 text-xs block truncate max-w-xs sm:max-w-md">
+                        {doc.name}
+                      </span>
+                      <span className="text-[10px] text-gray-400">{doc.size}</span>
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>{getCategoryBadge(doc.category)}</TableCell>
-                <TableCell className="text-xs text-gray-500 font-mono">{doc.size}</TableCell>
-                <TableCell>
-                  <span className="text-xs font-semibold text-gray-800">{doc.uploader}</span>
-                  <span className="block text-[10px] text-gray-400 capitalize">{doc.role}</span>
+                <TableCell className="text-xs text-gray-600">
+                  <span className="font-medium text-gray-900">{doc.uploader}</span>
                 </TableCell>
-                <TableCell className="text-xs text-gray-500 whitespace-nowrap">
-                  {formatDate(doc.uploadedAt)}
-                </TableCell>
+                <TableCell className="text-xs text-gray-500">{formatDate(doc.uploadedAt)}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDownloadSignedUrl(doc)}
-                    isLoading={downloadingId === doc.id}
+                    onClick={() => handleDownload(doc)}
+                    className="h-8 px-2.5 text-xs font-semibold"
                   >
-                    <Download className="h-3.5 w-3.5 mr-1" /> Unduh (15m TTL)
+                    <Download className="h-3.5 w-3.5 mr-1" /> Unduh
                   </Button>
                 </TableCell>
               </TableRow>
@@ -232,46 +235,46 @@ export default function DocumentPortalPage() {
         </Table>
       </Card>
 
-      {/* Upload Dialog */}
+      {/* Upload Modal */}
       <Dialog
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
-        title="Unggah Dokumen Skripsi Terenkripsi"
-        description="Dokumen akan dienkripsi secara otomatis dan dilindungi kebijakan otorisasi RLS."
+        title="Unggah Berkas Baru"
+        description="Pilih kategori berkas dan masukkan nama dokumen yang akan diserahkan."
       >
-        <form onSubmit={handleUploadNewDoc} className="space-y-4 pt-2 text-xs text-left">
+        <form onSubmit={handleUploadSubmit} className="space-y-4 pt-2 text-left">
           <Input
-            label="Nama Berkas Dokumen"
-            placeholder="Contoh: Draf_Bab_4_Analisis_Hasil.pdf"
-            value={fileName}
-            onChange={(e) => setFileName(e.target.value)}
+            label="Nama Berkas / Judul Dokumen"
+            placeholder="Contoh: Draf_Bab_4_Hasil_Pengujian.docx"
+            value={docName}
+            onChange={(e) => setDocName(e.target.value)}
             required
           />
 
           <Select
-            label="Kategori Dokumen"
-            value={category}
-            onChange={(e) => setCategory(e.target.value as any)}
+            label="Kategori Berkas"
+            value={uploadCategory}
+            onChange={(e) => setUploadCategory(e.target.value as any)}
             options={[
-              { value: 'FINAL_DELIVERABLE', label: 'Draf Bab Serahan (Final Deliverable)' },
-              { value: 'PLAGIARISM_REPORT', label: 'Laporan Plagiarisme (Turnitin Report)' },
-              { value: 'REVISION', label: 'Catatan Revisi / Draf Perbaikan Dosen' },
-              { value: 'BRIEF', label: 'Panduan Format / Pedoman Kampus' },
+              { value: 'DRAFT_INITIAL', label: 'Draf Pengerjaan Bab' },
+              { value: 'PLAGIARISM_REPORT', label: 'Laporan Uji Turnitin Resmi' },
+              { value: 'REVISION', label: 'Draf Revisi' },
+              { value: 'FINAL_DELIVERABLE', label: 'Naskah Final ACC' },
             ]}
           />
 
-          <div className="rounded-md border border-dashed border-gray-300 bg-surface-muted p-6 text-center">
-            <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-            <p className="font-semibold text-gray-700">Tarik berkas ke sini atau klik untuk browse</p>
-            <p className="text-[11px] text-gray-400 mt-1">Mendukung format PDF, DOCX, XLSX (Maks. 50 MB)</p>
+          <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center text-xs text-gray-500 bg-gray-50">
+            <Upload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+            <span className="font-semibold text-gray-700 block">Pilih file dari komputer</span>
+            <span className="text-[10px] text-gray-400">Mendukung file DOCX, PDF, ZIP (Maks. 50MB)</span>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
+          <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
             <Button variant="outline" size="sm" type="button" onClick={() => setIsUploadOpen(false)}>
               Batal
             </Button>
-            <Button variant="primary" size="sm" type="submit">
-              Simpan & Enkripsi File
+            <Button variant="primary" size="sm" type="submit" isLoading={isUploading} className="font-bold">
+              Unggah Dokumen
             </Button>
           </div>
         </form>

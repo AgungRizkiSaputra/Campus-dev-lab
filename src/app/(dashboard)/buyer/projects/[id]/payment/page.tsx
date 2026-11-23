@@ -21,7 +21,7 @@ import {
   Upload,
 } from 'lucide-react';
 
-export default function BuyerPaymentPortalPage() {
+export default function BuyerPaymentPage() {
   const params = useParams();
   const { toast } = useToast();
   const projectId = params.id as string;

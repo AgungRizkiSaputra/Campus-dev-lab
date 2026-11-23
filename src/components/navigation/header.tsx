@@ -2,11 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Bell, GraduationCap, User, LogOut, FileText, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Bell, GraduationCap, User, LogOut, MessageCircle, Sparkles } from 'lucide-react';
 
 interface HeaderProps {
   user?: {
@@ -20,8 +18,6 @@ interface HeaderProps {
 }
 
 export function Header({ user, onLogout }: HeaderProps) {
-  const pathname = usePathname();
-
   const profileMenuItems = [
     {
       label: 'Profil Pengguna',
@@ -29,19 +25,9 @@ export function Header({ user, onLogout }: HeaderProps) {
       onClick: () => (window.location.href = '/profile'),
     },
     {
-      label: 'Mode Mahasiswa (Klien)',
-      icon: <GraduationCap className="h-4 w-4" />,
-      onClick: () => (window.location.href = '/buyer'),
-    },
-    {
-      label: 'Mode Tim Inti (Pengerja)',
-      icon: <Sparkles className="h-4 w-4" />,
-      onClick: () => (window.location.href = '/seller'),
-    },
-    {
-      label: 'Mode Administrator',
-      icon: <FileText className="h-4 w-4" />,
-      onClick: () => (window.location.href = '/admin'),
+      label: 'Bantuan WhatsApp',
+      icon: <MessageCircle className="h-4 w-4 text-emerald-600" />,
+      onClick: () => window.open('https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku', '_blank'),
     },
     {
       label: 'Keluar',
@@ -61,42 +47,16 @@ export function Header({ user, onLogout }: HeaderProps) {
         <span className="font-serif text-base font-bold text-forest-950">Jokiskripsiku</span>
       </div>
 
-      {/* Desktop Quick Role View Switcher */}
-      <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-xl bg-surface-muted border border-gray-200 text-xs">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2">Akses Portal:</span>
-        <Link
-          href="/buyer"
-          className={cn(
-            'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
-            user?.role === 'buyer'
-              ? 'bg-forest-900 text-white shadow-xs'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
-          )}
-        >
-          Mahasiswa (Klien)
-        </Link>
-        <Link
-          href="/seller"
-          className={cn(
-            'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
-            user?.role === 'seller'
-              ? 'bg-forest-900 text-white shadow-xs'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
-          )}
-        >
-          Tim Inti (Joki)
-        </Link>
-        <Link
-          href="/admin"
-          className={cn(
-            'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
-            user?.role === 'admin'
-              ? 'bg-forest-900 text-white shadow-xs'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
-          )}
-        >
-          Admin Rekber
-        </Link>
+      {/* Desktop Brand Subtitle */}
+      <div className="hidden lg:flex items-center gap-2.5 text-left">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forest-50 border border-forest-200 text-xs font-bold text-forest-900">
+          <Sparkles className="h-3.5 w-3.5 text-forest-700" />
+          <span>Jokiskripsiku</span>
+        </span>
+        <span className="text-gray-300">/</span>
+        <span className="text-xs font-medium text-gray-500">
+          Solusi Tugas & Skripsi Anda — Selesai, Cepat, & Amanah
+        </span>
       </div>
 
       {/* Right Actions */}

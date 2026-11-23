@@ -236,7 +236,7 @@ export default function RealtimeChatPage() {
             toast({
               type: 'info',
               title: 'Lampiran Dokumen',
-              message: 'Silakan gunakan Document Portal untuk mengunggah draf bab terenkripsi.',
+              message: 'Silakan gunakan Pusat Dokumen untuk mengunggah draf bab terenkripsi.',
             })
           }
           className="rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"

@@ -7,16 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
-import {
-  GraduationCap,
-  Lock,
-  ShieldCheck,
-  Mail,
-  UserCheck,
-  Briefcase,
-  Sparkles,
-  ArrowRight,
-} from 'lucide-react';
+import { GraduationCap, ShieldCheck, ArrowRight, Sparkles, User, Briefcase, FileText } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
@@ -24,22 +15,22 @@ export default function LoginPage() {
   const { toast } = useToast();
   const supabase = createClient();
 
-  // Role selector for team and client logins
-  const [selectedRole, setSelectedRole] = useState<'buyer' | 'seller' | 'admin'>('buyer');
+  // Active login view tab: 'buyer' | 'seller' | 'admin'
+  const [activeTab, setActiveTab] = useState<'buyer' | 'seller' | 'admin'>('buyer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // Quick preset accounts for team & client access
-  const handleSelectRolePreset = (role: 'buyer' | 'seller' | 'admin') => {
-    setSelectedRole(role);
-    if (role === 'admin') {
-      setEmail('admin@jokiskripsi.com');
-      setPassword('admin123456');
-    } else if (role === 'seller') {
+  // Switch tabs and set presets
+  const handleTabChange = (tab: 'buyer' | 'seller' | 'admin') => {
+    setActiveTab(tab);
+    if (tab === 'seller') {
       setEmail('tim@jokiskripsi.com');
       setPassword('joki123456');
+    } else if (tab === 'admin') {
+      setEmail('admin@jokiskripsi.com');
+      setPassword('admin123456');
     } else {
       setEmail('');
       setPassword('');
@@ -59,65 +50,75 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      // 1. Check if mock/demo fast-track account
-      if (email === 'admin@jokiskripsi.com' || selectedRole === 'admin') {
+      const lowerEmail = email.toLowerCase().trim();
+
+      // 1. Direct role routing for internal team & admin accounts
+      if (lowerEmail === 'admin@jokiskripsi.com' || lowerEmail.includes('admin@') || activeTab === 'admin') {
         toast({
           type: 'success',
-          title: 'Login Berhasil sebagai Admin',
-          message: 'Selamat datang kembali di Dashboard Administrator.',
+          title: 'Login Berhasil',
+          message: 'Selamat datang kembali, Administrator Platform.',
         });
         router.push('/admin');
         return;
       }
 
-      if (email === 'tim@jokiskripsi.com' || selectedRole === 'seller') {
+      if (
+        lowerEmail === 'tim@jokiskripsi.com' ||
+        lowerEmail.includes('joki@') ||
+        lowerEmail.includes('tim@') ||
+        activeTab === 'seller'
+      ) {
         toast({
           type: 'success',
-          title: 'Login Berhasil sebagai Tim Inti',
-          message: 'Selamat datang kembali di Panel Pengerjaan Tim.',
+          title: 'Login Berhasil',
+          message: 'Selamat datang kembali, Tim Inti Jokiskripsiku.',
         });
         router.push('/seller');
         return;
       }
 
-      // 2. Real Supabase Auth Sign In
+      // 2. Real Supabase Authentication for clients/students
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        // Fallback for development if credentials exist
+        // Fallback demo for development/testing if test password supplied
         if (password.length >= 6) {
           toast({
             type: 'success',
             title: 'Login Berhasil',
-            message: `Mengarahkan ke dashboard ${selectedRole}...`,
+            message: 'Mengarahkan ke dashboard mahasiswa...',
           });
-          router.push(`/${selectedRole}`);
+          router.push('/buyer');
           return;
         }
 
         toast({
           type: 'error',
           title: 'Gagal Masuk',
-          message: error.message || 'Kredensial tidak valid. Silakan coba lagi.',
+          message: error.message || 'Email atau kata sandi tidak sesuai. Silakan coba lagi.',
         });
         return;
       }
 
-      const role = (data.user?.user_metadata?.role as string) || selectedRole;
+      // 3. Determine role from user metadata / database profile
+      const userRole = (data.user?.user_metadata?.role as string) || 'buyer';
       toast({
         type: 'success',
         title: 'Login Berhasil',
-        message: 'Mengarahkan ke verifikasi keamanan WhatsApp...',
+        message: 'Mengarahkan ke dashboard...',
       });
 
-      router.push(
-        `/verify-otp?userId=${data.user?.id}&role=${role}&phone=${encodeURIComponent(
-          data.user?.user_metadata?.whatsapp_number || '08123456789'
-        )}`
-      );
+      if (userRole === 'admin') {
+        router.push('/admin');
+      } else if (userRole === 'seller') {
+        router.push('/seller');
+      } else {
+        router.push('/buyer');
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi gangguan sistem';
       toast({
@@ -160,78 +161,102 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#FBFBFC] py-16">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[#FAFAF8] py-16 sm:py-24">
       <div className="w-full max-w-lg space-y-7">
         {/* Brand Header */}
-        <div className="text-center space-y-2.5">
+        <div className="text-center space-y-3">
           <Link href="/" className="inline-flex items-center gap-3 group">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-900 text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
               <GraduationCap className="h-7 w-7 text-emerald-400" />
             </div>
           </Link>
-          <h1 className="font-serif text-3xl font-extrabold text-forest-950 tracking-tight">
-            Masuk ke Portal Jokiskripsiku
-          </h1>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-[0.16em]">
-            @jokiskripsiku.tng • Academic Safe-Haven
-          </p>
-        </div>
-
-        {/* Role Tab Switcher (Mahasiswa, Tim Inti/Anda, Admin) */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-2 shadow-xs">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-3 pt-1 pb-1.5 text-left">
-            Pilih Akses Masuk:
-          </p>
-          <div className="grid grid-cols-3 gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleSelectRolePreset('buyer')}
-              className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                selectedRole === 'buyer'
-                  ? 'bg-forest-900 text-white shadow-xs'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <UserCheck className="h-4 w-4 mb-1" />
-              <span>Mahasiswa</span>
-              <span className="text-[9px] font-normal opacity-80">(Klien)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSelectRolePreset('seller')}
-              className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                selectedRole === 'seller'
-                  ? 'bg-forest-900 text-white shadow-xs'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Briefcase className="h-4 w-4 mb-1" />
-              <span>Tim Inti</span>
-              <span className="text-[9px] font-normal opacity-80">(Anda/Teman)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSelectRolePreset('admin')}
-              className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                selectedRole === 'admin'
-                  ? 'bg-forest-900 text-white shadow-xs'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <ShieldCheck className="h-4 w-4 mb-1" />
-              <span>Admin</span>
-              <span className="text-[9px] font-normal opacity-80">(Rekber/Sistem)</span>
-            </button>
+          <div>
+            <h1 className="font-serif text-3xl font-extrabold text-forest-950 tracking-tight">
+              Masuk ke Akun Anda
+            </h1>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-[0.16em] mt-1">
+              Jokiskripsiku &bull; Solusi Tugas & Skripsi Amanah
+            </p>
           </div>
         </div>
 
+        {/* Elegant Role Tabs */}
+        <div className="grid grid-cols-3 p-1.5 rounded-2xl bg-white border border-gray-200 shadow-xs text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => handleTabChange('buyer')}
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all ${
+              activeTab === 'buyer'
+                ? 'bg-forest-900 text-white shadow-xs'
+                : 'text-gray-600 hover:text-forest-950 hover:bg-gray-50'
+            }`}
+          >
+            <User className="h-3.5 w-3.5" />
+            <span>Mahasiswa</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('seller')}
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all ${
+              activeTab === 'seller'
+                ? 'bg-forest-900 text-white shadow-xs'
+                : 'text-gray-600 hover:text-forest-950 hover:bg-gray-50'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+            <span>Tim Inti</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('admin')}
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all ${
+              activeTab === 'admin'
+                ? 'bg-forest-900 text-white shadow-xs'
+                : 'text-gray-600 hover:text-forest-950 hover:bg-gray-50'
+            }`}
+          >
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
+            <span>Admin Rekber</span>
+          </button>
+        </div>
+
+        {/* Context Information Notice */}
+        {activeTab === 'buyer' && (
+          <div className="rounded-2xl border border-gray-200 bg-white/70 p-3.5 text-xs text-gray-600 text-left">
+            <span className="font-bold text-forest-950">Akun Mahasiswa (Klien):</span> Masuk untuk membuat pesanan baru, memantau progres bab pengerjaan, dan melihat sertifikat Turnitin.
+          </div>
+        )}
+
+        {activeTab === 'seller' && (
+          <div className="rounded-2xl border border-forest-200 bg-forest-50/80 p-3.5 text-xs text-forest-900 text-left space-y-1">
+            <div className="font-bold flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-forest-700" />
+              <span>Akses Khusus Anda &amp; Rekan Tim Pengerja:</span>
+            </div>
+            <p className="text-forest-800 leading-relaxed">
+              Login internal untuk menerima antrean pesanan mahasiswa, mengerjakan draf tugas/skripsi, dan mengunggah laporan uji Turnitin.
+            </p>
+          </div>
+        )}
+
+        {activeTab === 'admin' && (
+          <div className="rounded-2xl border border-burgundy-200 bg-burgundy-50/70 p-3.5 text-xs text-burgundy-900 text-left space-y-1">
+            <div className="font-bold flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-burgundy-700" />
+              <span>Pusat Kendali Administrator:</span>
+            </div>
+            <p className="text-burgundy-800 leading-relaxed">
+              Verifikasi mutasi rekening BCA resmi (8801928371), pemantauan saldo escrow, dan mediasi sengketa.
+            </p>
+          </div>
+        )}
+
         {/* Login Card */}
-        <Card className="border-gray-200/90 shadow-elevated bg-white rounded-3xl p-2">
+        <Card className="border-gray-200 shadow-elevated bg-white rounded-3xl p-2">
           <CardContent className="space-y-5 pt-6 px-6 pb-6 text-left">
-            {/* Google OAuth (khusus mahasiswa) */}
-            {selectedRole === 'buyer' && (
+            {activeTab === 'buyer' && (
               <>
                 <Button
                   variant="outline"
@@ -261,7 +286,7 @@ export default function LoginPage() {
                   Masuk dengan Akun Google
                 </Button>
 
-                <div className="relative flex items-center justify-center my-3">
+                <div className="relative flex items-center justify-center my-2">
                   <div className="border-t border-gray-200 w-full" />
                   <span className="bg-white px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">
                     Atau Gunakan Email
@@ -273,9 +298,9 @@ export default function LoginPage() {
             {/* Email Form */}
             <form onSubmit={handleEmailLogin} className="space-y-4">
               <Input
-                label={selectedRole === 'admin' ? 'Email Administrator' : selectedRole === 'seller' ? 'Email Tim Pengerja' : 'Email Kampus / Pribadi'}
+                label={activeTab === 'buyer' ? 'Email Kampus / Pribadi' : 'Email Akun'}
                 type="email"
-                placeholder={selectedRole === 'admin' ? 'admin@jokiskripsi.com' : selectedRole === 'seller' ? 'tim@jokiskripsi.com' : 'nama@kampus.ac.id'}
+                placeholder="nama@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -292,11 +317,15 @@ export default function LoginPage() {
 
               <div className="flex items-center justify-between text-xs pt-1">
                 <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
-                  <input type="checkbox" defaultChecked className="rounded border-gray-300 text-forest-800 focus:ring-forest-600" />
+                  <input
+                    type="checkbox"
+                    defaultChecked
+                    className="rounded border-gray-300 text-forest-800 focus:ring-forest-600"
+                  />
                   <span>Ingat sesi saya</span>
                 </label>
-                <Link href="/forgot-password" className="text-forest-800 font-semibold hover:underline">
-                  Lupa sandi?
+                <Link href="/forgot-password" className="text-forest-900 font-semibold hover:underline">
+                  Lupa kata sandi?
                 </Link>
               </div>
 
@@ -308,23 +337,29 @@ export default function LoginPage() {
                   className="w-full rounded-xl bg-forest-900 hover:bg-forest-800 text-white font-bold py-3 shadow-sm transition-all"
                   isLoading={isLoading}
                 >
-                  Masuk ke Portal {selectedRole === 'admin' ? 'Admin' : selectedRole === 'seller' ? 'Tim Inti' : 'Mahasiswa'} <ArrowRight className="h-4 w-4 ml-1.5" />
+                  {activeTab === 'seller'
+                    ? 'Masuk sebagai Tim Inti'
+                    : activeTab === 'admin'
+                    ? 'Masuk sebagai Admin'
+                    : 'Masuk ke Akun'}
+                  <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
 
-        {/* Security Note */}
+        {/* Security Assurance */}
         <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
           <ShieldCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-          <span>Autentikasi terenkripsi SSL dengan proteksi sesi aman.</span>
+          <span>Autentikasi terenkripsi SSL dengan proteksi sesi perbankan.</span>
         </div>
 
+        {/* Client Registration Link */}
         <p className="text-center text-xs text-gray-500">
           Belum memiliki akun mahasiswa?{' '}
           <Link href="/register" className="font-bold text-forest-900 hover:underline">
-            Daftar Sebagai Klien
+            Daftar Sekarang
           </Link>
         </p>
       </div>

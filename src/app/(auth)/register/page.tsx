@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
-import { GraduationCap, ShieldCheck, ArrowRight, UserCheck } from 'lucide-react';
+import { GraduationCap, ShieldCheck, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
@@ -30,7 +30,7 @@ export default function RegisterPage() {
       toast({
         type: 'error',
         title: 'Formulir Belum Lengkap',
-        message: 'Mohon isi seluruh data yang diwajibkan.',
+        message: 'Mohon lengkapi seluruh data yang bertanda bintang.',
       });
       return;
     }
@@ -41,7 +41,7 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      // All public signups are strictly Klien/Mahasiswa (Buyer)
+      // All public registrations are strictly for Mahasiswa / Klien (Buyer)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -69,7 +69,7 @@ export default function RegisterPage() {
       toast({
         type: 'success',
         title: 'Pendaftaran Berhasil',
-        message: 'Kode OTP keamanan telah dikirim ke WhatsApp Anda.',
+        message: 'Kode verifikasi keamanan telah dikirimkan ke WhatsApp Anda.',
       });
 
       router.push(`/verify-otp?userId=${data.user?.id}&role=buyer&phone=${encodeURIComponent(cleanPhone)}`);
@@ -86,40 +86,42 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#FBFBFC] py-20">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[#FAFAF8] py-16 sm:py-24">
       <div className="w-full max-w-lg space-y-7">
         {/* Brand Header */}
-        <div className="text-center space-y-2.5">
+        <div className="text-center space-y-3">
           <Link href="/" className="inline-flex items-center gap-3 group">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-900 text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
               <GraduationCap className="h-7 w-7 text-emerald-400" />
             </div>
           </Link>
-          <h1 className="font-serif text-3xl font-extrabold text-forest-950 tracking-tight">
-            Daftar Akun Mahasiswa
-          </h1>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-[0.16em]">
-            Jokiskripsiku • Solusi Tugas & Skripsi Amanah
-          </p>
+          <div>
+            <h1 className="font-serif text-3xl font-extrabold text-forest-950 tracking-tight">
+              Daftar Akun Mahasiswa
+            </h1>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-[0.16em] mt-1">
+              Jokiskripsiku &bull; Solusi Tugas &amp; Skripsi Amanah
+            </p>
+          </div>
         </div>
 
         {/* Exclusive Team Trust Notice */}
-        <div className="rounded-2xl border border-forest-200 bg-forest-50/80 p-4 text-left shadow-xs">
+        <div className="rounded-2xl border border-forest-200 bg-forest-50/90 p-4 text-left shadow-xs">
           <div className="flex items-start gap-3">
             <ShieldCheck className="h-5 w-5 text-emerald-700 mt-0.5 flex-shrink-0" />
-            <div>
+            <div className="space-y-1">
               <h2 className="text-xs font-bold uppercase tracking-wider text-forest-950">
                 Pengerjaan Langsung oleh Tim Ahli Inti
               </h2>
-              <p className="text-xs text-forest-800 mt-1 leading-relaxed">
-                Pesanan Anda ditangani langsung secara privat oleh tim internal kami (tanpa perantara/calo liar). Seluruh transaksi dilindungi sistem Rekber resmi dan garansi revisi.
+              <p className="text-xs text-forest-800 leading-relaxed">
+                Pesanan Anda ditangani langsung oleh tim internal kami (bebas calo liar). Pembayaran aman di Rekber resmi BCA (8801928371 a.n PT Joki Skripsi Indonesia) dan dilengkapi garansi revisi bebas biaya.
               </p>
             </div>
           </div>
         </div>
 
         {/* Registration Card */}
-        <Card className="border-gray-200/90 shadow-elevated bg-white rounded-3xl p-2">
+        <Card className="border-gray-200 shadow-elevated bg-white rounded-3xl p-2">
           <CardContent className="pt-6 px-6 pb-6 text-left">
             <form onSubmit={handleRegister} className="space-y-4">
               <Input
@@ -144,7 +146,7 @@ export default function RegisterPage() {
                   placeholder="08123456789"
                   value={whatsappNumber}
                   onChange={(e) => setWhatsappNumber(e.target.value)}
-                  helperText="Untuk pengiriman draf & notifikasi"
+                  helperText="Untuk notifikasi progres tugas"
                   required
                 />
               </div>
@@ -160,7 +162,7 @@ export default function RegisterPage() {
 
               <div className="border-t border-gray-100 pt-4 mt-2">
                 <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
-                  Informasi Kampus
+                  Informasi Kampus &amp; Jurusan
                 </p>
                 <div className="space-y-3">
                   <Input
@@ -195,7 +197,7 @@ export default function RegisterPage() {
                   className="w-full rounded-xl bg-forest-900 hover:bg-forest-800 text-white font-bold py-3 shadow-sm transition-all"
                   isLoading={isLoading}
                 >
-                  Daftar & Lanjutkan ke Verifikasi <ArrowRight className="h-4 w-4 ml-1.5" />
+                  Daftar &amp; Lanjutkan ke Verifikasi <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </div>
             </form>
@@ -206,7 +208,7 @@ export default function RegisterPage() {
         <p className="text-center text-xs text-gray-500">
           Sudah memiliki akun terdaftar?{' '}
           <Link href="/login" className="font-bold text-forest-900 hover:underline">
-            Masuk ke Portal
+            Masuk Sekarang
           </Link>
         </p>
       </div>

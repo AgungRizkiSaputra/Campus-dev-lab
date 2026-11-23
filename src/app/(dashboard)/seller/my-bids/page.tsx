@@ -13,10 +13,10 @@ import {
   FolderKanban,
   CheckCircle2,
   Clock,
-  XCircle,
   MessageSquare,
   ArrowRight,
   ShieldCheck,
+  FileCheck2,
 } from 'lucide-react';
 
 export default function MyBidsPage() {
@@ -38,13 +38,11 @@ export default function MyBidsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ACCEPTED':
-        return <Badge variant="success">Diterima Klien (ACCEPTED)</Badge>;
+        return <Badge variant="success">Disetujui Klien (Sedang Dikerjakan)</Badge>;
       case 'PENDING':
-        return <Badge variant="gold">Menunggu Keputusan Klien</Badge>;
+        return <Badge variant="gold">Menunggu Konfirmasi Deposit Rekber</Badge>;
       case 'REJECTED':
-        return <Badge variant="danger">Tidak Terpilih</Badge>;
-      case 'WITHDRAWN':
-        return <Badge variant="gray">Ditarik</Badge>;
+        return <Badge variant="danger">Dibatalkan</Badge>;
       default:
         return <Badge variant="gray">{status}</Badge>;
     }
@@ -52,20 +50,28 @@ export default function MyBidsPage() {
 
   return (
     <div className="space-y-6 text-left">
-      <div className="border-b border-gray-200 pb-4">
-        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900">
-          Penawaran (Bids) Saya
-        </h1>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">
-          Lacak status penawaran yang telah Anda ajukan ke bursa proyek mahasiswa.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-4">
+        <div>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900">
+            Tugas Aktif Tim Jokiskripsiku
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
+            Lacak seluruh pesanan mahasiswa yang sedang aktif dikerjakan oleh Anda dan rekan tim.
+          </p>
+        </div>
+
+        <Link href="/seller/explore">
+          <Button variant="primary" size="md" className="font-bold">
+            Buka Antrean Pesanan &rarr;
+          </Button>
+        </Link>
       </div>
 
       {bids.length === 0 ? (
         <EmptyState
-          title="Belum Ada Penawaran yang Diajukan"
-          description="Anda belum mengajukan blind bid pada proyek skripsi yang tersedia."
-          actionLabel="Jelajahi Bursa Proyek"
+          title="Belum Ada Tugas yang Sedang Dikerjakan"
+          description="Anda belum menerima pesanan dari antrean mahasiswa."
+          actionLabel="Buka Antrean Pesanan"
           onAction={() => (window.location.href = '/seller/explore')}
         />
       ) : (
@@ -84,15 +90,15 @@ export default function MyBidsPage() {
                   <div className="flex items-center gap-2">
                     {getStatusBadge(bid.status)}
                     <span className="text-xs text-gray-400">&bull;</span>
-                    <span className="text-xs text-gray-500">Diajukan: {formatDate(bid.created_at)}</span>
+                    <span className="text-xs text-gray-500">Dikonfirmasi: {formatDate(bid.created_at)}</span>
                   </div>
 
                   <h3 className="font-serif text-lg font-bold text-gray-900">
-                    Penawaran Proyek #{bid.project_id}
+                    Pesanan #{bid.project_id}
                   </h3>
 
-                  <div className="rounded-md bg-surface-muted p-3 text-xs text-gray-700 leading-relaxed border border-gray-100 max-w-3xl">
-                    <strong className="block text-gray-900 mb-1">Proposal Anda:</strong>
+                  <div className="rounded-xl bg-surface-muted p-3 text-xs text-gray-700 leading-relaxed border border-gray-100 max-w-3xl">
+                    <strong className="block text-gray-900 mb-1">Catatan Pengerjaan Tim:</strong>
                     {bid.proposal}
                   </div>
 
@@ -100,25 +106,24 @@ export default function MyBidsPage() {
                     <span>Estimasi Durasi: <strong className="text-gray-900">{bid.estimated_days} Hari</strong></span>
                     <span>&bull;</span>
                     <span className="font-bold text-forest-900 text-sm">
-                      Nominal: {formatRupiah(bid.bid_amount)}
+                      Biaya: {formatRupiah(bid.bid_amount)}
                     </span>
                   </div>
                 </div>
 
                 <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 border-t sm:border-t-0 pt-3 sm:pt-0">
-                  {bid.status === 'ACCEPTED' ? (
+                  <div className="flex items-center gap-2">
                     <Link href={`/shared/chat/${bid.project_id}`}>
-                      <Button variant="primary" size="sm">
-                        <MessageSquare className="h-4 w-4 mr-1.5" /> Buka Ruang Kerja & Chat
+                      <Button variant="outline" size="sm">
+                        <MessageSquare className="h-4 w-4 mr-1 text-emerald-600" /> Chat Klien
                       </Button>
                     </Link>
-                  ) : bid.status === 'PENDING' ? (
-                    <div className="text-xs text-amber-700 bg-amber-50 px-3 py-1.5 rounded-md border border-amber-200 font-medium">
-                      Mahasiswa sedang meninjau proposal
-                    </div>
-                  ) : (
-                    <span className="text-xs text-gray-400">Penawaran ditutup</span>
-                  )}
+                    <Link href={`/shared/documents/${bid.project_id}`}>
+                      <Button variant="primary" size="sm" className="font-bold">
+                        <FileCheck2 className="h-4 w-4 mr-1" /> Dokumen &amp; Turnitin
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </Card>

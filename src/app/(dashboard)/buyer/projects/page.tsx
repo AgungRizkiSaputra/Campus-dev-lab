@@ -53,15 +53,15 @@ export default function BuyerProjectsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN':
-        return <Badge variant="forest">Terbuka (OPEN)</Badge>;
+        return <Badge variant="forest">Pesanan Diterima</Badge>;
       case 'BIDDING':
-        return <Badge variant="gold">Proses Bidding</Badge>;
+        return <Badge variant="gold">Menunggu Konfirmasi Tim</Badge>;
       case 'IN_PROGRESS':
-        return <Badge variant="forest">Sedang Berjalan</Badge>;
+        return <Badge variant="forest">Sedang Dikerjakan</Badge>;
       case 'REVIEW':
         return <Badge variant="burgundy">Dalam Peninjauan</Badge>;
       case 'COMPLETED':
-        return <Badge variant="success">Selesai</Badge>;
+        return <Badge variant="success">Selesai (ACC)</Badge>;
       case 'DISPUTED':
         return <Badge variant="danger">Sengketa (Dispute)</Badge>;
       default:
@@ -74,16 +74,16 @@ export default function BuyerProjectsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900">
-            Daftar Proyek Skripsi Saya
+            Daftar Pesanan Saya
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Kelola seluruh proyek yang pernah diajukan, tinjau penawaran blind bid, dan pantau tahapan bab.
+            Kelola seluruh pesanan Anda, pantau proses pengerjaan oleh tim inti, dan unduh hasil Turnitin.
           </p>
         </div>
 
         <Link href="/buyer/create-project">
           <Button variant="primary" size="md">
-            <FilePlus className="h-4 w-4 mr-1.5" /> Buat Proyek Baru
+            <FilePlus className="h-4 w-4 mr-1.5" /> Pesan Layanan Baru
           </Button>
         </Link>
       </div>
@@ -105,11 +105,11 @@ export default function BuyerProjectsPage() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             options={[
-              { value: 'ALL', label: 'Semua Status Proyek' },
-              { value: 'OPEN', label: 'Terbuka (OPEN)' },
-              { value: 'BIDDING', label: 'Proses Bidding' },
-              { value: 'IN_PROGRESS', label: 'Sedang Berjalan' },
-              { value: 'COMPLETED', label: 'Selesai' },
+              { value: 'ALL', label: 'Semua Status Pesanan' },
+              { value: 'OPEN', label: 'Pesanan Diterima' },
+              { value: 'BIDDING', label: 'Menunggu Konfirmasi Tim' },
+              { value: 'IN_PROGRESS', label: 'Sedang Dikerjakan' },
+              { value: 'COMPLETED', label: 'Selesai (ACC)' },
               { value: 'DISPUTED', label: 'Sengketa' },
             ]}
           />
@@ -119,9 +119,9 @@ export default function BuyerProjectsPage() {
       {/* Projects List */}
       {filtered.length === 0 ? (
         <EmptyState
-          title="Tidak Ada Proyek Ditemukan"
-          description="Anda belum memiliki proyek yang sesuai dengan kriteria filter saat ini."
-          actionLabel="Posting Kebutuhan Sekarang"
+          title="Tidak Ada Pesanan Ditemukan"
+          description="Anda belum memiliki pesanan yang sesuai dengan kriteria pencarian."
+          actionLabel="Pesan Layanan Sekarang"
           onAction={() => (window.location.href = '/buyer/create-project')}
         />
       ) : (
@@ -149,7 +149,7 @@ export default function BuyerProjectsPage() {
 
                   <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-gray-500">
                     <span className="font-bold text-forest-900 text-sm">
-                      {formatRupiah(proj.budget_min)} - {formatRupiah(proj.budget_max)}
+                      Estimasi: {formatRupiah(proj.budget_min)} - {formatRupiah(proj.budget_max)}
                     </span>
                     <span>&bull;</span>
                     <span className="inline-flex items-center gap-1">
@@ -161,7 +161,7 @@ export default function BuyerProjectsPage() {
                 <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
                   <Link href={`/buyer/projects/${proj.id}`}>
                     <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                      Tinjau Penawaran <ArrowRight className="h-4 w-4 ml-1" />
+                      Lihat Rincian Pesanan <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
                   </Link>
                 </div>

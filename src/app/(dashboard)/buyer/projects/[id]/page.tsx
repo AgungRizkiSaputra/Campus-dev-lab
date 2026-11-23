@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
 import { formatRupiah, formatDate } from '@/lib/utils';
@@ -23,7 +22,9 @@ import {
   CheckCircle2,
   Lock,
   ArrowLeft,
+  ArrowRight,
   Sparkles,
+  FileCheck2,
 } from 'lucide-react';
 
 export default function BuyerProjectDetailPage() {
@@ -35,8 +36,6 @@ export default function BuyerProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [bids, setBids] = useState<Bidding[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedBid, setSelectedBid] = useState<Bidding | null>(null);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
 
   useEffect(() => {
@@ -58,46 +57,27 @@ export default function BuyerProjectDetailPage() {
     load();
   }, [projectId]);
 
-  const handleSelectJoki = (bid: Bidding) => {
-    setSelectedBid(bid);
-    setIsConfirmOpen(true);
-  };
-
-  const handleConfirmAcceptBid = async () => {
-    if (!selectedBid || !project) return;
+  // Handle direct agreement confirmation to proceed to payment
+  const handleProceedPayment = async () => {
+    if (!project) return;
     setIsAccepting(true);
 
     try {
-      const res = await acceptBidAction(project.id, selectedBid.id, selectedBid.joki_id);
-      if (!res.success) {
-        toast({
-          type: 'error',
-          title: 'Gagal Memilih Joki',
-          message: res.error,
-        });
-        return;
+      // If bids exist, accept the primary team proposal
+      if (bids.length > 0) {
+        await acceptBidAction(project.id, bids[0].id, bids[0].joki_id);
       }
-
       toast({
         type: 'success',
-        title: 'Joki Berhasil Ditetapkan!',
-        message: 'Proyek beralih ke status IN_PROGRESS. Silakan lakukan deposit pembayaran Rekber untuk memulai Bab 1.',
+        title: 'Kesepakatan Dikonfirmasi!',
+        message: 'Mengarahkan ke pembayaran Rekber resmi platform...',
       });
-
-      setIsConfirmOpen(false);
-      // Refresh local state
-      setProject({ ...project, status: 'IN_PROGRESS', assigned_joki_id: selectedBid.joki_id });
-      setBids((prev) =>
-        prev.map((b) => ({
-          ...b,
-          status: b.id === selectedBid.id ? 'ACCEPTED' : 'REJECTED',
-        }))
-      );
+      router.push(`/buyer/projects/${project.id}/payment`);
     } catch {
       toast({
         type: 'error',
-        title: 'Kesalahan Sistem',
-        message: 'Gagal menetapkan joki terpilih.',
+        title: 'Gangguan Sistem',
+        message: 'Gagal memproses persetujuan. Silakan coba lagi.',
       });
     } finally {
       setIsAccepting(false);
@@ -106,8 +86,8 @@ export default function BuyerProjectDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto p-12 text-center text-sm text-gray-500">
-        Memuat detail proyek dan penawaran...
+      <div className="max-w-5xl mx-auto p-16 text-center text-sm text-gray-500">
+        Memuat detail pesanan dan status pengerjaan...
       </div>
     );
   }
@@ -115,220 +95,261 @@ export default function BuyerProjectDetailPage() {
   if (!project) {
     return (
       <EmptyState
-        title="Proyek Tidak Ditemukan"
-        description="ID proyek tidak valid atau sudah dihapus."
-        actionLabel="Kembali ke Daftar Proyek"
+        title="Pesanan Tidak Ditemukan"
+        description="ID pesanan tidak valid atau sudah dihapus."
+        actionLabel="Kembali ke Daftar Pesanan"
         onAction={() => router.push('/buyer/projects')}
       />
     );
   }
 
+  // Determine current progression step (1 to 4)
+  const currentStep =
+    project.status === 'COMPLETED'
+      ? 4
+      : project.status === 'IN_PROGRESS' || project.status === 'REVIEW'
+      ? 3
+      : bids.length > 0
+      ? 2
+      : 1;
+
+  const flowSteps = [
+    { num: 1, title: 'Pesanan Diterima', desc: 'Instruksi masuk ke tim' },
+    { num: 2, title: 'Konfirmasi Tim', desc: 'Kesepakatan biaya & waktu' },
+    { num: 3, title: 'Rekber & Pengerjaan', desc: 'Dana HELD, Turnitin dicek' },
+    { num: 4, title: 'ACC & Selesai', desc: 'Draf disetujui, dana rilis' },
+  ];
+
   return (
-    <div className="max-w-5xl mx-auto space-y-6 text-left">
+    <div className="max-w-5xl mx-auto space-y-7 text-left">
       {/* Top Breadcrumb & Action */}
       <div className="flex items-center justify-between">
         <Link
           href="/buyer/projects"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-forest-800"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-forest-900 transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Proyek
+          <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Pesanan
         </Link>
 
         {project.status === 'IN_PROGRESS' && (
           <div className="flex items-center gap-2">
             <Link href={`/shared/chat/${project.id}`}>
+              <Button variant="outline" size="sm" className="border-forest-200 text-forest-900">
+                <MessageSquare className="h-4 w-4 mr-1 text-emerald-600" /> Chat Tim Pengerja
+              </Button>
+            </Link>
+            <Link href={`/buyer/projects/${project.id}/milestones`}>
               <Button variant="primary" size="sm">
-                <MessageSquare className="h-4 w-4 mr-1" /> Ruang Diskusi & Chat
+                <FileCheck2 className="h-4 w-4 mr-1" /> Tinjau Draf Bab & Turnitin
               </Button>
             </Link>
           </div>
         )}
       </div>
 
+      {/* Visual Step Tracker (Alur 4 Langkah Jelas) */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs space-y-4">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-forest-800 bg-forest-50 px-2.5 py-1 rounded-md border border-forest-200">
+          Alur Pengerjaan Pesanan
+        </span>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+          {flowSteps.map((step) => {
+            const isCompleted = step.num < currentStep;
+            const isCurrent = step.num === currentStep;
+            return (
+              <div
+                key={step.num}
+                className={`rounded-xl p-3 border transition-all ${
+                  isCurrent
+                    ? 'border-forest-800 bg-forest-50/80 ring-2 ring-forest-800/30'
+                    : isCompleted
+                    ? 'border-emerald-200 bg-emerald-50/50'
+                    : 'border-gray-200 bg-gray-50/50 opacity-60'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                      isCurrent
+                        ? 'bg-forest-900 text-white'
+                        : isCompleted
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    {isCompleted ? '✓' : step.num}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    Langkah {step.num}
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-gray-900 leading-tight">{step.title}</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">{step.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Project Overview Card */}
-      <Card className="p-6 border-forest-100 shadow-card">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 pb-4 border-b border-gray-100">
+      <Card className="p-7 border-gray-200 shadow-xs bg-white rounded-2xl">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 pb-5 border-b border-gray-100">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Badge variant={project.status === 'IN_PROGRESS' ? 'forest' : 'gold'}>
-                {project.status}
+                {project.status === 'IN_PROGRESS'
+                  ? 'SEDANG DIKERJAKAN'
+                  : project.status === 'COMPLETED'
+                  ? 'SELESAI ACC'
+                  : 'MENUNGGU KONFIRMASI REKBER'}
               </Badge>
-              <span className="text-xs font-semibold text-gray-600">{project.major}</span>
-              <span className="text-xs text-gray-400">&bull;</span>
+              <span className="text-xs font-bold text-gray-700">{project.major}</span>
+              <span className="text-xs text-gray-300">&bull;</span>
               <span className="text-xs text-gray-500">{project.faculty}</span>
             </div>
             <h1 className="font-serif text-2xl font-bold text-gray-900 leading-tight">
               {project.title}
             </h1>
-            <p className="text-xs text-gray-500 font-medium">Topik: {project.topic}</p>
+            <p className="text-xs text-gray-500 font-medium">Topik Fokus: {project.topic}</p>
           </div>
 
-          <div className="text-right">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Rentang Budget</span>
+          <div className="text-left md:text-right">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Estimasi Anggaran</span>
             <p className="font-bold text-forest-900 text-lg">
-              {formatRupiah(project.budget_min)} - {formatRupiah(project.budget_max)}
+              {formatRupiah(project.budget_min)} – {formatRupiah(project.budget_max)}
             </p>
           </div>
         </div>
 
-        <div className="py-4 space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700">Uraian Kebutuhan Mahasiswa</h4>
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+        <div className="py-5 space-y-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-700">Uraian Instruksi Mahasiswa</h2>
+          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-surface-muted/60 p-4 rounded-xl border border-gray-100">
             {project.description}
           </p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-gray-100 text-xs">
           <div>
-            <span className="text-gray-400 block text-[10px] uppercase font-bold">Tenggat Akhir</span>
-            <span className="font-semibold text-gray-800">{formatDate(project.deadline)}</span>
+            <span className="text-gray-400 block text-[10px] uppercase font-bold">Target Selesai</span>
+            <span className="font-bold text-gray-900">{formatDate(project.deadline)}</span>
           </div>
           <div>
-            <span className="text-gray-400 block text-[10px] uppercase font-bold">Model Layanan</span>
-            <span className="font-semibold text-gray-800">{project.service_type}</span>
+            <span className="text-gray-400 block text-[10px] uppercase font-bold">Jenis Layanan</span>
+            <span className="font-bold text-gray-900">{project.service_type}</span>
           </div>
           <div>
-            <span className="text-gray-400 block text-[10px] uppercase font-bold">Total Penawaran Masuk</span>
-            <span className="font-bold text-forest-900">{bids.length} Blind Bids</span>
+            <span className="text-gray-400 block text-[10px] uppercase font-bold">Pengerja Tugas</span>
+            <span className="font-bold text-forest-900">Tim Inti Jokiskripsiku</span>
           </div>
           <div>
-            <span className="text-gray-400 block text-[10px] uppercase font-bold">Proteksi Rekber</span>
-            <span className="font-semibold text-emerald-700 inline-flex items-center gap-1">
-              <ShieldCheck className="h-3.5 w-3.5" /> Escrow Aktif
+            <span className="text-gray-400 block text-[10px] uppercase font-bold">Proteksi Dana</span>
+            <span className="font-bold text-emerald-700 inline-flex items-center gap-1">
+              <ShieldCheck className="h-4 w-4" /> Rekber BCA Resmi
             </span>
           </div>
         </div>
       </Card>
 
-      {/* Received Blind Bids Section */}
+      {/* Proposal & Kesepakatan Pengerjaan oleh Tim Jokiskripsiku */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-serif text-xl font-bold text-gray-900">
-              Penawaran Blind Bidding yang Masuk
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Sebagai mahasiswa pemilik proyek, Anda memiliki hak eksklusif melihat proposal dan nominal penawaran joki.
-            </p>
-          </div>
-          <Badge variant="forest">{bids.length} Penawaran</Badge>
-        </div>
+        <h2 className="font-serif text-xl font-bold text-gray-900">
+          Konfirmasi Pengerjaan dari Tim Jokiskripsiku
+        </h2>
 
-        {bids.length === 0 ? (
-          <EmptyState
-            title="Belum Ada Penawaran Masuk"
-            description="Proyek Anda baru saja dipublikasikan ke bursa. Joki yang memiliki keahlian di jurusan Anda akan segera mengirimkan proposal penawaran."
-          />
-        ) : (
-          <div className="space-y-3">
-            {bids.map((bid) => (
-              <Card
-                key={bid.id}
-                className={`p-6 transition-all ${
-                  bid.status === 'ACCEPTED'
-                    ? 'border-forest-600 bg-forest-50/20 ring-1 ring-forest-600'
-                    : 'border-gray-200'
-                }`}
-              >
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-serif text-base font-bold text-gray-900">
-                        {bid.joki?.full_name || 'Konsultan Akademik'}
-                      </span>
-                      {bid.joki?.is_verified && (
-                        <Badge variant="forest" size="sm">
-                          Verified KYC
-                        </Badge>
-                      )}
-                      <span className="text-xs text-amber-700 font-semibold">
-                        ★ {bid.joki?.rating_avg || '5.0'} ({bid.joki?.completed_projects_count || 10} selesai)
-                      </span>
-                      {bid.status === 'ACCEPTED' && (
-                        <Badge variant="success">Joki Terpilih</Badge>
-                      )}
-                    </div>
-
-                    <p className="text-xs text-gray-500">
-                      Alumni: {bid.joki?.university || 'PTN Terkemuka'} &bull; Jurusan: {bid.joki?.major || 'Relevan'}
-                    </p>
-
-                    <div className="rounded-md bg-surface-muted p-3 text-xs text-gray-700 leading-relaxed border border-gray-100">
-                      <strong className="block text-gray-900 mb-1">Proposal & Strategi Pengerjaan:</strong>
-                      {bid.proposal}
-                    </div>
-
-                    <div className="flex items-center gap-4 text-xs text-gray-500 pt-1">
-                      <span>Estimasi Waktu: <strong className="text-gray-900">{bid.estimated_days} Hari</strong></span>
-                      <span>&bull;</span>
-                      <span>Dikirim: {formatDate(bid.created_at)}</span>
-                    </div>
-                  </div>
-
-                  <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 border-t sm:border-t-0 pt-3 sm:pt-0">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase text-gray-400">Nominal Bid</span>
-                      <p className="font-bold text-lg text-forest-900">{formatRupiah(bid.bid_amount)}</p>
-                    </div>
-
-                    {project.status === 'OPEN' || project.status === 'BIDDING' ? (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleSelectJoki(bid)}
-                      >
-                        Pilih Joki Ini
-                      </Button>
-                    ) : bid.status === 'ACCEPTED' ? (
-                      <Badge variant="success">Ditugaskan</Badge>
-                    ) : null}
-                  </div>
+        {project.status === 'OPEN' || project.status === 'BIDDING' ? (
+          <div className="rounded-2xl border border-forest-200 bg-white p-6 shadow-xs space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-forest-900 text-white shadow-xs">
+                  <ShieldCheck className="h-6 w-6 text-emerald-400" />
                 </div>
-              </Card>
-            ))}
+                <div>
+                  <h3 className="font-serif text-base font-bold text-gray-900">
+                    Proposal Pengerjaan Tim Inti Jokiskripsiku
+                  </h3>
+                  <p className="text-xs text-forest-800 font-semibold">
+                    Dikerjakan langsung secara privat • Garansi Lolos Turnitin & Bebas Revisi
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-left sm:text-right">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Biaya Pengerjaan</span>
+                <p className="font-bold text-forest-900 text-xl font-serif">
+                  {formatRupiah(bids[0]?.bid_amount || project.budget_min)}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+              Tim kami telah mempelajari instruksi tugas Anda dan siap memulai pengerjaan sesuai dengan metodologi riset kampus Anda. 
+              Draf pengerjaan akan diserahkan bertahap lengkap dengan sertifikat uji plagiasi Turnitin resmi.
+            </p>
+
+            <div className="rounded-xl bg-forest-50/70 p-4 border border-forest-100 text-xs space-y-1.5 text-forest-900">
+              <div className="flex items-center gap-2 font-bold text-forest-950">
+                <Lock className="h-4 w-4 text-emerald-600" />
+                <span>Mekanisme Pembayaran Aman:</span>
+              </div>
+              <p className="text-forest-800 leading-relaxed">
+                Biaya ditransfer ke rekening bersama resmi platform (BCA 8801928371 a.n PT Joki Skripsi Indonesia). Dana tidak dicairkan sebelum Anda menyetujui (ACC) hasil pengerjaan.
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-3">
+              <a
+                href={`https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku,%20mau%20diskusi%20proyek%20${encodeURIComponent(project.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="md" className="w-full sm:w-auto font-semibold">
+                  <MessageSquare className="h-4 w-4 mr-1.5 text-emerald-600" /> Tanya Dulu via WhatsApp
+                </Button>
+              </a>
+
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleProceedPayment}
+                isLoading={isAccepting}
+                className="w-full sm:w-auto rounded-xl bg-forest-900 hover:bg-forest-800 font-bold px-6 shadow-sm"
+              >
+                Setujui & Lanjut Pembayaran Rekber <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-serif text-base font-bold text-gray-900">
+                  Pesanan Sedang Dikerjakan oleh Tim Inti
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Dana telah diamankan di Rekber platform. Anda dapat memantau progres bab dan membuka chat langsung.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <Link href={`/shared/chat/${project.id}`}>
+                <Button variant="outline" size="sm" className="font-semibold">
+                  <MessageSquare className="h-4 w-4 mr-1 text-emerald-600" /> Chat Tim
+                </Button>
+              </Link>
+              <Link href={`/buyer/projects/${project.id}/milestones`}>
+                <Button variant="primary" size="sm" className="font-bold">
+                  Buka Draf Bab & Turnitin <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Confirmation Modal */}
-      <Dialog
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        title="Konfirmasi Pemilihan Joki"
-        description="Anda akan menetapkan konsultan akademik ini sebagai penanggung jawab proyek."
-      >
-        <div className="space-y-4 text-xs text-gray-700 pt-2">
-          {selectedBid && (
-            <div className="rounded-md bg-forest-50 p-4 border border-forest-100 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Nama Joki:</span>
-                <strong className="text-gray-900">{selectedBid.joki?.full_name}</strong>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Nominal Disepakati:</span>
-                <strong className="text-forest-900 font-bold">{formatRupiah(selectedBid.bid_amount)}</strong>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Estimasi Selesai:</span>
-                <strong className="text-gray-900">{selectedBid.estimated_days} Hari</strong>
-              </div>
-            </div>
-          )}
-
-          <p className="leading-relaxed">
-            Setelah memilih, status proyek akan beralih menjadi <strong>IN_PROGRESS</strong> dan ruang chat kolaborasi langsung dibuka. Dana akan aman disimpan di Rekber Escrow platform hingga Anda menyetujui hasil per bab.
-          </p>
-
-          <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-            <Button variant="outline" size="sm" onClick={() => setIsConfirmOpen(false)} disabled={isAccepting}>
-              Batal
-            </Button>
-            <Button variant="primary" size="sm" onClick={handleConfirmAcceptBid} isLoading={isAccepting}>
-              Setujui & Tetapkan Joki
-            </Button>
-          </div>
-        </div>
-      </Dialog>
     </div>
   );
 }

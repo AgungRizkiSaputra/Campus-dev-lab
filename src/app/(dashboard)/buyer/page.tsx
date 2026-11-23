@@ -69,11 +69,12 @@ export default function BuyerDashboardPage() {
       {/* Top Banner / Welcome */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-6">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-forest-50 border border-forest-200 text-[11px] font-bold text-forest-800 mb-2">
-            <span>🎓 Jokiskripsiku Client Portal</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forest-50 border border-forest-200 text-xs font-bold text-forest-800 mb-2">
+            <Sparkles className="h-3.5 w-3.5 text-forest-700" />
+            <span>Dashboard Mahasiswa Jokiskripsiku</span>
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900">
-            Dashboard Mahasiswa
+            Selamat Datang di Ruang Kerja Anda
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-1">
             Pantau progres pengerjaan tugas, hasil Turnitin, dan pelepasan dana rekber langsung dengan tim kami.
@@ -187,14 +188,14 @@ export default function BuyerDashboardPage() {
               <div className="rounded-xl bg-forest-50/70 p-3.5 border border-forest-100">
                 <span className="font-bold text-forest-800 uppercase text-[10px]">Pengerja Tugas</span>
                 <p className="font-bold text-gray-900 mt-1">Tim Inti Jokiskripsiku</p>
-                <p className="text-gray-500 text-[11px]">Bebas calo • Komunikasi 1 pintu</p>
+                <p className="text-gray-500 text-[11px]">Bebas calo &bull; Komunikasi 1 pintu</p>
               </div>
 
               <div className="rounded-xl bg-forest-50/70 p-3.5 border border-forest-100">
                 <span className="font-bold text-forest-800 uppercase text-[10px]">Tahap Saat Ini</span>
-                <p className="font-bold text-gray-900 mt-1">Bab 3: Desain & Metodologi Riset</p>
+                <p className="font-bold text-gray-900 mt-1">Bab 3: Desain &amp; Metodologi Riset</p>
                 <Link href="/buyer/projects/demo-1/milestones" className="text-amber-800 text-[11px] font-bold hover:underline block mt-0.5">
-                  Tinjau Draf Bab & Turnitin 9% &rarr;
+                  Tinjau Draf Bab &amp; Turnitin 9% &rarr;
                 </Link>
               </div>
 
