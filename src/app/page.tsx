@@ -1,14 +1,16 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   GraduationCap,
   ShieldCheck,
   Lock,
   FileCheck2,
-  Users,
   ArrowRight,
   Sparkles,
   CheckCircle2,
@@ -17,7 +19,6 @@ import {
   Wallet,
   BookOpen,
   FileText,
-  HelpCircle,
   Laptop,
   Mail,
   SearchCheck,
@@ -28,173 +29,216 @@ import {
 } from 'lucide-react';
 
 export default function LandingPage() {
+  const wordsContainerRef = useRef<HTMLDivElement>(null);
+
+  // Initialize GSAP + ScrollTrigger word-by-word scroll reveal
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    if (wordsContainerRef.current) {
+      const words = wordsContainerRef.current.querySelectorAll('.gsap-word');
+      gsap.fromTo(
+        words,
+        {
+          opacity: 0.15,
+          y: 25,
+          filter: 'blur(4px)',
+        },
+        {
+          opacity: 1,
+          y: 0,
+          filter: 'blur(0px)',
+          stagger: 0.08,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: wordsContainerRef.current,
+            start: 'top 85%',
+            end: 'top 35%',
+            scrub: 0.8,
+          },
+        }
+      );
+    }
+
+    return () => {
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
+  }, []);
+
+  const headlineLine1 = ['Tugas', 'Berat?'];
+  const headlineLine2 = ['Biar', 'Tim', 'Kami', 'Yang', 'Beresin.'];
+
   const services = [
     {
-      num: 1,
+      num: '01',
       title: 'SEMPRO',
       subtitle: 'Seminar Proposal',
-      desc: 'Bantuan penyusunan seminar proposal dari perumusan judul, latar belakang, hingga siap diseminarkan dengan percaya diri.',
-      tag: 'Favorit Mahasiswa',
+      desc: 'Bantuan penyusunan seminar proposal komprehensif mulai dari formulasi judul, latar belakang ilmiah, hingga siap diseminarkan di hadapan dosen penguji.',
+      tag: 'Bab 1–3',
       icon: BookOpen,
-      color: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      href: '/buyer/create-project?service=SEMPRO',
     },
     {
-      num: 2,
+      num: '02',
       title: 'SKRIPSI',
       subtitle: 'Skripsi Lengkap Bab 1–5',
-      desc: 'Pengerjaan dan bimbingan skripsi lengkap & berkualitas tinggi dari awal rancangan hingga bab kesimpulan akhir.',
+      desc: 'Penyusunan naskah skripsi lengkap terstruktur dengan metodologi mutakhir, pengolahan data akurat, dan pembahasan mendalam hingga tuntas wisuda.',
       tag: 'Paket Lengkap',
       icon: GraduationCap,
-      color: 'bg-forest-50 text-forest-800 border-forest-200',
+      href: '/buyer/create-project?service=SKRIPSI',
     },
     {
-      num: 3,
+      num: '03',
       title: 'TUGAS',
       subtitle: 'Tugas Kuliah Harian',
-      desc: 'Mengerjakan berbagai tugas kuliah harian atau mingguan sesuai instruksi dosen dengan ketelitian dan hasil terbaik.',
-      tag: 'Semua Jurusan',
+      desc: 'Pengerjaan tugas kuliah analitis, studi kasus, essay ilmiah, hingga laporan praktikum dengan ketepatan referensi dan mutu terbaik.',
+      tag: 'Cepat & Akurat',
       icon: FileText,
-      color: 'bg-blue-50 text-blue-800 border-blue-200',
+      href: '/buyer/create-project?service=TUGAS',
     },
     {
-      num: 4,
+      num: '04',
       title: 'UTS / UAS',
-      subtitle: 'Ujian Tengah & Akhir Semester',
-      desc: 'Bantuan pengerjaan soal UTS & UAS dengan analisis akurat, jawaban terstruktur, serta ketepatan waktu pengumpulan.',
+      subtitle: 'Ujian Semester',
+      desc: 'Asistensi pengerjaan soal ujian semester dengan jawaban presisi, runtut, dan pengumpulan tepat waktu demi indeks prestasi maksimal.',
       tag: 'Fast Response',
       icon: Clock,
-      color: 'bg-amber-50 text-amber-800 border-amber-200',
+      href: '/buyer/create-project?service=UTS_UAS',
     },
     {
-      num: 5,
+      num: '05',
       title: 'MAKALAH',
       subtitle: 'Karya Tulis Ilmiah',
-      desc: 'Penyusunan makalah terstruktur, tinjauan pustaka komprehensif, rapi, dan sesuai dengan kaidah penulisan kampus.',
-      tag: 'Rapi & Sistematis',
+      desc: 'Penyusunan makalah sistematis berbasis literatur jurnal terakreditasi nasional maupun internasional sesuai kaidah format kampus Anda.',
+      tag: 'Rapi & Terstruktur',
       icon: FileCheck2,
-      color: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+      href: '/buyer/create-project?service=MAKALAH',
     },
     {
-      num: 6,
+      num: '06',
       title: 'PPT',
-      subtitle: 'Desain Presentasi Sidang',
-      desc: 'Pembuatan slide presentasi menarik, visual profesional, siap disajikan untuk sempro, tugas, maupun sidang skripsi.',
+      subtitle: 'Slide Presentasi Sidang',
+      desc: 'Desain visual slide presentasi kelas eksekutif dengan struktur infografis bersih, alur logis, dan siap dipresentasikan di ruang sidang.',
       tag: 'Desain Modern',
       icon: Sparkles,
-      color: 'bg-purple-50 text-purple-800 border-purple-200',
+      href: '/buyer/create-project?service=PPT',
     },
     {
-      num: 7,
-      title: 'WEBSITE & APLIKASI',
-      subtitle: 'Coding Tugas & Skripsi IT',
-      desc: 'Pembuatan website, aplikasi mobile, dan sistem informasi custom sesuai kebutuhan riset dan tugas akhir Anda.',
-      tag: 'Full-Stack / Coding',
+      num: '07',
+      title: 'WEB & APLIKASI',
+      subtitle: 'Coding Tugas/Skripsi IT',
+      desc: 'Pengembangan perangkat lunak, sistem informasi, mobile app, atau machine learning custom lengkap dengan pengujian dan dokumentasi source code.',
+      tag: 'Full-Stack',
       icon: Laptop,
-      color: 'bg-teal-50 text-teal-800 border-teal-200',
+      href: '/buyer/create-project?service=WEBSITE_APP',
     },
     {
-      num: 8,
+      num: '08',
       title: 'UNDANGAN DIGITAL',
       subtitle: 'Desain Custom & Interaktif',
-      desc: 'Pembuatan undangan digital estetik, custom, responsif di berbagai perangkat smartphone, dan elegan.',
+      desc: 'Pembuatan undangan digital berbasis web interaktif, responsif untuk seluruh layar smartphone, estetik, dan berfitur RSVP modern.',
       tag: 'Custom Design',
       icon: Mail,
-      color: 'bg-rose-50 text-rose-800 border-rose-200',
+      href: '/buyer/create-project?service=UNDANGAN_DIGITAL',
     },
     {
-      num: 9,
+      num: '09',
       title: 'CEK PLAGIASI',
       subtitle: 'Uji Turnitin No-Repository',
-      desc: 'Pengecekan tingkat plagiasi karya tulis ilmiah Anda secara cepat dan akurat menggunakan akun Turnitin resmi.',
+      desc: 'Pengecekan tingkat kesamaan naskah ilmiah Anda secara resmi melalui akun Turnitin No-Repository tanpa risiko karya tersimpan di database.',
       tag: 'Turnitin Resmi',
       icon: SearchCheck,
-      color: 'bg-cyan-50 text-cyan-800 border-cyan-200',
+      href: '/buyer/create-project?service=CEK_PLAGIASI',
     },
     {
-      num: 10,
+      num: '10',
       title: 'TURUNIN PLAGIASI',
-      subtitle: 'Parafrase Lolos Turnitin',
-      desc: 'Menurunkan persentase kesamaan (similarity) secara aman dan efektif lewat teknik parafrase manual tanpa mengubah arti.',
-      tag: 'Garansi Lolos < 20%',
+      subtitle: 'Parafrase Lolos Uji',
+      desc: 'Reduksi persentase plagiasi Turnitin melalui teknik parafrase manual akademis tanpa merusak makna dan keaslian konteks riset Anda.',
+      tag: 'Garansi < 20%',
       icon: FileSearch,
-      color: 'bg-burgundy-50 text-burgundy-800 border-burgundy-200',
+      href: '/buyer/create-project?service=TURUNIN_PLAGIASI',
     },
   ];
 
   const pillars = [
     {
       title: 'PROFESIONAL',
-      subtitle: 'Dikerjakan oleh Tim Berpengalaman',
-      desc: 'Dikerjakan langsung oleh tim internal kami yang berpendidikan sarjana dan berpengalaman menangani berbagai bidang disiplin ilmu.',
+      subtitle: 'Dikerjakan Tim Inti Berpengalaman',
+      desc: 'Ditangani langsung oleh tim internal kami yang berpendidikan akademis tinggi dan menguasai berbagai metodologi riset.',
       icon: Award,
-      badge: 'Standar Tinggi',
     },
     {
       title: 'TEPAT WAKTU',
-      subtitle: 'Pengerjaan Sesuai Deadline',
-      desc: 'Manajemen waktu ketat. Kami memastikan draf tugas dan skripsi diserahkan tepat pada jadwal yang telah Anda tentukan.',
+      subtitle: 'Disiplin Sesuai Jadwal Sidang',
+      desc: 'Manajemen waktu ketat. Setiap draf bab diserahkan tepat pada tenggat waktu yang telah disepakati bersama.',
       icon: Clock,
-      badge: 'Tepat Jadwal',
     },
     {
       title: 'HASIL TERBAIK',
-      subtitle: 'Kualitas Terbaik Tanpa Drama',
-      desc: 'Hasil pengerjaan terstruktur, referensi mutakhir, bebas plagiasi liar, dan siap menghadapi pertanyaan dosen pembimbing.',
+      subtitle: 'Standar Mutu Tinggi Tanpa Drama',
+      desc: 'Penulisan mendalam, referensi primer mutakhir, bergaransi revisi tuntas sampai disetujui dosen pembimbing.',
       icon: CheckCircle2,
-      badge: 'Garansi Revisi',
     },
     {
       title: 'HARGA TERJANGKAU',
-      subtitle: 'Bersahabat & Negotiable',
-      desc: 'Biaya disesuaikan dengan tingkat kerumitan dan tenggat waktu. Sangat ramah untuk kantong mahasiswa dan bisa dinegosiasikan.',
+      subtitle: 'Transparan & Negotiable',
+      desc: 'Penawaran biaya yang adil dan sebanding dengan kompleksitas tugas. Sangat bersahabat bagi anggaran mahasiswa.',
       icon: Wallet,
-      badge: 'Harga Pelajar',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-surface-muted text-gray-900 selection:bg-forest-800 selection:text-white">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-40 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-forest-800 text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
-              <GraduationCap className="h-6 w-6" />
+    <div className="min-h-screen bg-[#FBFBFC] text-gray-900 selection:bg-forest-800 selection:text-white">
+      {/* Pristine Luxury Navbar */}
+      <header className="sticky top-0 z-50 w-full border-b border-gray-200/70 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-10">
+          {/* Brand */}
+          <Link href="/" className="flex items-center gap-3.5 group">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-forest-900 text-white shadow-sm transition-transform duration-300 group-hover:scale-105">
+              <GraduationCap className="h-6 w-6 text-emerald-400" />
             </div>
-            <div>
+            <div className="text-left">
               <span className="font-serif text-xl font-bold tracking-tight text-forest-950 block leading-tight">
                 Jokiskripsiku
               </span>
-              <span className="text-[10px] font-bold tracking-wider text-burgundy-700 uppercase flex items-center gap-1">
-                <span>@jokiskripsiku.tng</span>
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              <span className="text-[10px] font-bold tracking-[0.16em] text-burgundy-700 uppercase block">
+                @jokiskripsiku.tng
               </span>
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-gray-600">
-            <a href="#layanan" className="hover:text-forest-800 transition-colors">10 Layanan</a>
-            <a href="#keunggulan" className="hover:text-forest-800 transition-colors">Keunggulan Tim</a>
-            <a href="#sistem-rekber" className="hover:text-forest-800 transition-colors">Sistem Rekber</a>
-            <a href="#tim-ahli" className="hover:text-forest-800 transition-colors">Tentang Kami</a>
+          {/* Nav Links */}
+          <nav className="hidden md:flex items-center gap-8 text-[11px] font-bold tracking-[0.14em] uppercase text-gray-500">
+            <a href="#layanan" className="hover:text-forest-950 transition-colors">10 Layanan</a>
+            <a href="#keunggulan" className="hover:text-forest-950 transition-colors">Keunggulan Tim</a>
+            <a href="#sistem-rekber" className="hover:text-forest-950 transition-colors">Sistem Rekber</a>
+            <a href="#tentang-kami" className="hover:text-forest-950 transition-colors">Tentang Kami</a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          {/* Action CTAs */}
+          <div className="flex items-center gap-4">
             <a
-              href="https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku,%20saya%20ingin%20konsultasi%20mengenai%20skripsi/tugas%20saya"
+              href="https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku,%20saya%20ingin%20konsultasi%20tugas/skripsi"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex"
+              className="hidden sm:inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-xs hover:border-emerald-500 hover:text-emerald-800 transition-all"
             >
-              <Button variant="outline" size="sm" className="border-forest-200 text-forest-800 hover:bg-forest-50">
-                <MessageCircle className="h-4 w-4 mr-1.5 text-emerald-600" /> Tanya WhatsApp
-              </Button>
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Tanya WhatsApp</span>
             </a>
-            <Link href="/login">
-              <Button variant="ghost" size="sm">Masuk</Button>
+            <Link
+              href="/login"
+              className="text-xs font-bold uppercase tracking-wider text-gray-600 hover:text-forest-950 px-2 py-1.5 transition-colors"
+            >
+              Masuk
             </Link>
             <Link href="/buyer/create-project">
-              <Button variant="primary" size="sm" className="font-bold shadow-sm">
+              <Button
+                variant="primary"
+                size="sm"
+                className="rounded-full bg-forest-900 hover:bg-forest-800 text-white font-bold px-5 py-2 shadow-sm transition-all hover:shadow-md"
+              >
                 Pesan Sekarang
               </Button>
             </Link>
@@ -202,66 +246,105 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-white via-surface-muted to-forest-50/20 px-4 pt-14 pb-20 sm:px-6 lg:px-8 lg:pt-20 lg:pb-28 text-center">
-        <div className="mx-auto max-w-4xl space-y-6">
-          {/* Trust Pill */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-forest-200 bg-forest-50/90 px-4 py-1.5 text-xs font-bold text-forest-900 shadow-sm">
-            <Sparkles className="h-4 w-4 text-forest-700" />
-            <span>SOLUSI TUGAS & SKRIPSI ANDA — SELESAI, CEPAT, & AMANAH!</span>
+      {/* Hero Section with GSAP Word-by-Word Scroll Reveal */}
+      <section className="relative overflow-hidden px-6 pt-20 pb-28 lg:px-10 lg:pt-28 lg:pb-36 text-center">
+        <div className="mx-auto max-w-4xl space-y-8">
+          {/* Subtle Luxury Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2.5 rounded-full border border-forest-200 bg-forest-50/70 px-4 py-1.5 text-xs font-semibold tracking-wider text-forest-900 uppercase shadow-xs"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-forest-700"></span>
+            <span>Solusi Tugas & Skripsi Anda — Selesai, Cepat, & Amanah</span>
+          </motion.div>
+
+          {/* GSAP Word-by-Word Scroll Reveal Headline */}
+          <div ref={wordsContainerRef} className="space-y-2 py-2">
+            <div className="font-serif text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-forest-950 leading-[1.12]">
+              {headlineLine1.map((word, i) => (
+                <span key={i} className="inline-block mr-[0.28em]">
+                  <span className="gsap-word inline-block">{word}</span>
+                </span>
+              ))}
+            </div>
+            <div className="font-serif text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-forest-900 leading-[1.12]">
+              {headlineLine2.map((word, i) => (
+                <span key={i} className="inline-block mr-[0.28em]">
+                  <span className="gsap-word inline-block">{word}</span>
+                </span>
+              ))}
+            </div>
           </div>
 
-          <h1 className="font-serif text-3xl font-extrabold tracking-tight text-forest-950 sm:text-5xl lg:text-6xl leading-[1.15]">
-            Tugas Berat? <br className="hidden sm:inline" />
-            <span className="text-forest-800 underline decoration-burgundy-600/40 decoration-wavy">
-              Biar Tim Kami Yang Beresin!
-            </span> 🎓✨
-          </h1>
-
-          <p className="mx-auto max-w-2xl text-base sm:text-lg text-gray-600 leading-relaxed font-sans">
-            Mau urusan akademik atau kebutuhan digital, kami punya solusi lengkapnya! 
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="mx-auto max-w-2xl text-base sm:text-lg text-gray-600 leading-relaxed font-sans"
+          >
+            Mau urusan akademik atau kebutuhan digital, kami punya solusi lengkapnya. 
             Dari tugas harian sampai skripsi tuntas, semuanya dikerjakan langsung oleh 
-            <strong className="text-forest-950"> Tim Ahli Inti Berpengalaman</strong> dengan amanah, cepat, dan transparan.
-          </p>
+            <strong className="text-forest-950 font-semibold"> Tim Ahli Inti Berpengalaman</strong> secara 
+            amanah, tepat waktu, dan bergaransi lolos Turnitin.
+          </motion.p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
+          >
             <Link href="/buyer/create-project" className="w-full sm:w-auto">
-              <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold text-sm shadow-md">
-                Pilih Layanan & Pesan <ArrowRight className="h-4 w-4 ml-1.5" />
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full sm:w-auto rounded-full bg-forest-900 hover:bg-forest-800 text-white font-bold px-8 py-3.5 shadow-md transition-all hover:scale-[1.02]"
+              >
+                Pilih Layanan & Pesan <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
             <a
-              href="https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku,%20mau%20konsultasi%20tugas%20kuliah/skripsi%20saya"
+              href="https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku,%20mau%20konsultasi%20tugas/skripsi%20saya"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto"
             >
-              <Button variant="outline" size="lg" className="w-full sm:w-auto font-semibold border-forest-300 text-forest-900 bg-white hover:bg-forest-50">
-                <MessageCircle className="h-4 w-4 mr-2 text-emerald-600" /> Konsultasi Langsung via WhatsApp
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto rounded-full border-gray-300 text-gray-800 bg-white hover:bg-gray-50 px-7 py-3.5 font-semibold shadow-xs transition-all hover:border-gray-400"
+              >
+                <MessageCircle className="h-4 w-4 mr-2 text-emerald-600" /> Diskusi via WhatsApp
               </Button>
             </a>
-          </div>
+          </motion.div>
 
-          {/* Quick Metrics Bar */}
-          <div className="pt-8 text-xs text-gray-500 font-medium">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white border border-gray-200 text-gray-700 shadow-xs">
+          {/* High-End Trust Label */}
+          <div className="pt-6">
+            <span className="inline-flex items-center gap-2 text-xs font-medium text-gray-500">
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
-              Dikerjakan Langsung oleh Tim Internal (Bukan Calo Liar) • Rekber Aman 100%
+              Dikerjakan Langsung oleh Tim Internal (Bukan Calo) • Sistem Rekber 100% Amanah
             </span>
           </div>
         </div>
       </section>
 
-      {/* 4 Core Pillars (Pilar Keunggulan) */}
-      <section id="keunggulan" className="px-4 py-16 sm:px-6 lg:px-8 bg-white border-y border-gray-200">
+      {/* 4 Pillars of Excellence */}
+      <section id="keunggulan" className="px-6 py-20 lg:px-10 bg-white border-y border-gray-200/80">
         <div className="mx-auto max-w-7xl">
-          <div className="text-center space-y-2 mb-12">
-            <Badge variant="forest">Komitmen Layanan</Badge>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900">
-              Kenapa Mempercayakan Tugas Pada Kami?
+          <div className="text-center space-y-3 mb-16">
+            <span className="text-[11px] font-bold tracking-[0.16em] uppercase text-forest-800 bg-forest-50 px-3.5 py-1 rounded-full border border-forest-200">
+              Komitmen Layanan
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
+              Standar Pengerjaan Kelas Profesional
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500 max-w-xl mx-auto">
-              Standar mutu tinggi untuk menjamin kenyamanan dan kesuksesan akademik Anda.
+            <p className="text-sm text-gray-500 max-w-xl mx-auto">
+              Dedikasi penuh demi kepuasan akademik dan kelulusan Anda tanpa kendala.
             </p>
           </div>
 
@@ -269,166 +352,168 @@ export default function LandingPage() {
             {pillars.map((item, idx) => {
               const Icon = item.icon;
               return (
-                <div
+                <motion.div
                   key={idx}
-                  className="rounded-xl border border-gray-200 bg-surface-muted/50 p-6 transition-all duration-200 hover:border-forest-300 hover:bg-white hover:shadow-sm"
+                  initial={{ opacity: 0, y: 25 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                  className="rounded-2xl border border-gray-200 bg-surface-muted/40 p-7 transition-all duration-200 hover:border-forest-300 hover:bg-white hover:shadow-card"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-forest-800 text-white shadow-xs">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-forest-800 bg-forest-100/70 px-2.5 py-1 rounded-full">
-                      {item.badge}
-                    </span>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-forest-900 text-white mb-5 shadow-xs">
+                    <Icon className="h-6 w-6 text-emerald-400" />
                   </div>
                   <h3 className="font-serif text-lg font-bold text-forest-950">
                     {item.title}
                   </h3>
-                  <p className="text-xs font-semibold text-burgundy-700 mt-1">
+                  <p className="text-xs font-bold text-burgundy-700 mt-1">
                     {item.subtitle}
                   </p>
                   <p className="text-xs text-gray-600 mt-3 leading-relaxed">
                     {item.desc}
                   </p>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* 10 Daftar Jasa Kami (Exact Showcase from Poster) */}
-      <section id="layanan" className="px-4 py-20 sm:px-6 lg:px-8 bg-surface-muted">
+      {/* 10 Daftar Jasa Kami */}
+      <section id="layanan" className="px-6 py-24 lg:px-10 bg-[#F8F9FA]">
         <div className="mx-auto max-w-7xl">
           <div className="text-center space-y-3 mb-16">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-burgundy-50 border border-burgundy-200 text-burgundy-800 text-xs font-bold">
-              <span>DAFTAR JASA KAMI</span>
-            </div>
-            <h2 className="font-serif text-3xl font-extrabold text-forest-950 sm:text-4xl">
-              10 Layanan Solutif untuk Kebutuhan Akademik & Digital
+            <span className="text-[11px] font-bold tracking-[0.16em] uppercase text-burgundy-800 bg-burgundy-50 px-3.5 py-1 rounded-full border border-burgundy-200">
+              Katalog Lengkap
+            </span>
+            <h2 className="font-serif text-3xl sm:text-5xl font-extrabold text-forest-950">
+              10 Layanan Solutif untuk Tugas & Skripsi
             </h2>
             <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-              Pilih layanan yang Anda butuhkan. Tim kami siap mendampingi pengerjaan dari tahap awal hingga selesai tuntas.
+              Pilih layanan yang Anda perlukan. Dikerjakan langsung oleh tim internal kami secara privat dan terstruktur.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-left">
-            {services.map((srv) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 text-left">
+            {services.map((srv, idx) => {
               const Icon = srv.icon;
               return (
-                <div
+                <motion.div
                   key={srv.num}
-                  className="group relative flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-forest-600 hover:shadow-md"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-50px' }}
+                  transition={{ duration: 0.5, delay: idx * 0.05 }}
+                  whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                  className="group relative flex flex-col justify-between rounded-2xl border border-gray-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:border-forest-600 hover:shadow-elevated"
                 >
                   <div>
-                    {/* Header with Number & Tag */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-forest-800 text-xs font-bold text-white shadow-xs">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-serif text-sm font-bold text-forest-900 bg-forest-50 px-2.5 py-1 rounded-md border border-forest-100">
                         {srv.num}
-                      </div>
+                      </span>
                       <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                         {srv.tag}
                       </span>
                     </div>
 
-                    {/* Service Icon */}
-                    <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg border ${srv.color}`}>
+                    <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-forest-50 text-forest-800 border border-forest-100 group-hover:bg-forest-900 group-hover:text-white transition-colors duration-200">
                       <Icon className="h-5 w-5" />
                     </div>
 
-                    {/* Title & Subtitle */}
-                    <h3 className="font-serif text-base font-bold text-gray-900 group-hover:text-forest-900 transition-colors">
+                    <h3 className="font-serif text-base font-bold text-gray-900 group-hover:text-forest-950 transition-colors">
                       {srv.title}
                     </h3>
-                    <p className="text-[11px] font-semibold text-forest-700 mt-0.5 mb-2">
+                    <p className="text-[11px] font-semibold text-forest-700 mt-0.5 mb-2.5">
                       {srv.subtitle}
                     </p>
 
-                    {/* Description */}
                     <p className="text-xs text-gray-500 leading-relaxed">
                       {srv.desc}
                     </p>
                   </div>
 
-                  {/* Order Button inside Card */}
-                  <div className="mt-4 pt-3 border-t border-gray-100">
+                  <div className="mt-5 pt-3.5 border-t border-gray-100">
                     <Link
-                      href={`/buyer/create-project?service=${encodeURIComponent(srv.title)}`}
+                      href={srv.href}
                       className="inline-flex w-full items-center justify-between text-xs font-bold text-forest-800 group-hover:text-forest-950 transition-colors"
                     >
                       <span>Pesan Jasa Ini</span>
                       <ChevronRight className="h-4 w-4 transform transition-transform group-hover:translate-x-1" />
                     </Link>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
 
-          {/* Quick Notice under services */}
-          <div className="mt-10 rounded-xl border border-forest-200 bg-forest-50/70 p-4 text-center max-w-2xl mx-auto">
-            <p className="text-xs text-forest-900 font-medium">
-              💡 <strong>Butuh paket khusus atau pengerjaan kilat?</strong> Diskusikan langsung dengan tim kami untuk mendapatkan estimasi waktu dan negosiasi biaya terbaik.
+          <div className="mt-12 rounded-2xl border border-forest-200 bg-forest-50/80 p-5 text-center max-w-2xl mx-auto shadow-xs">
+            <p className="text-xs text-forest-950 font-medium">
+              💡 <strong>Butuh pengerjaan paket khusus atau tenggat kilat?</strong> Diskusikan langsung bersama tim kami untuk estimasi timeline dan negosiasi biaya terbaik.
             </p>
           </div>
         </div>
       </section>
 
       {/* Exclusive Team Model (Kenapa Kami, Bukan Calo Liar) */}
-      <section id="tim-ahli" className="px-4 py-20 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
+      <section id="tentang-kami" className="px-6 py-24 lg:px-10 bg-white border-b border-gray-200">
         <div className="mx-auto max-w-5xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            <div className="space-y-4 text-left">
-              <Badge variant="forest">Kredibilitas Tim Inti</Badge>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-forest-950 leading-tight">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="space-y-5 text-left">
+              <span className="text-[11px] font-bold tracking-[0.16em] uppercase text-forest-800 bg-forest-50 px-3 py-1 rounded-full border border-forest-200">
+                Integritas Layanan
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-950 leading-tight">
                 Dikerjakan Langsung oleh Tim Kami Sendiri. Bukan Calo, Bukan Pihak Ketiga.
               </h2>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Di luaran sana, banyak jasa yang sekadar melempar tugas Anda ke freelance acak tanpa kontrol kualitas, sehingga sering terjadi salah paham, hasil asal-asalan, hingga risiko kabur saat revisi.
+                Di luaran sana, banyak jasa yang sekadar melempar tugas Anda ke freelance acak tanpa kontrol kualitas, sehingga sering terjadi miskomunikasi, hasil tidak sesuai instruksi, hingga risiko kabur saat revisi.
               </p>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Di <strong className="text-forest-950">Jokiskripsiku</strong>, seluruh pengerjaan ditangani langsung oleh kami (tim ahli internal yang berdedikasi). Kami menjaga komunikasi 1 pintu, bertanggung jawab penuh atas hasil, dan mendampingi sampai Anda tuntas.
+                Di <strong className="text-forest-950">Jokiskripsiku</strong>, seluruh pengerjaan ditangani langsung oleh kami (tim inti terpercaya). Kami mengutamakan komunikasi satu pintu, bertanggung jawab penuh atas hasil, dan mendampingi Anda sampai tuntas sidang.
               </p>
 
-              <div className="space-y-2 pt-2">
-                <div className="flex items-center gap-2.5 text-xs text-gray-700 font-semibold">
+              <div className="space-y-2.5 pt-2">
+                <div className="flex items-center gap-3 text-xs text-gray-700 font-semibold">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                  <span>Komunikasi 1 pintu langsung dengan pengerja tugas</span>
+                  <span>Komunikasi 1 pintu langsung dengan tim pengerja</span>
                 </div>
-                <div className="flex items-center gap-2.5 text-xs text-gray-700 font-semibold">
+                <div className="flex items-center gap-3 text-xs text-gray-700 font-semibold">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                  <span>Garansi revisi sampai tuntas sesuai instruksi awal</span>
+                  <span>Garansi revisi penuh sesuai instruksi awal</span>
                 </div>
-                <div className="flex items-center gap-2.5 text-xs text-gray-700 font-semibold">
+                <div className="flex items-center gap-3 text-xs text-gray-700 font-semibold">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                  <span>Bukti cek Turnitin resmi bebas plagiasi liar</span>
+                  <span>Sertifikat hasil uji Turnitin resmi pada setiap bab</span>
                 </div>
               </div>
             </div>
 
             {/* Team Guarantee Card */}
-            <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-forest-900 to-forest-950 p-8 text-white shadow-lg text-left space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40">
+            <div className="rounded-3xl border border-gray-200 bg-gradient-to-br from-forest-950 to-forest-900 p-8 sm:p-10 text-white shadow-xl text-left space-y-6">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40">
                   <ShieldCheck className="h-7 w-7" />
                 </div>
                 <div>
-                  <h3 className="font-serif text-lg font-bold text-white">Garansi Amanah & Kualitas</h3>
-                  <p className="text-xs text-forest-200">#TugasBeresKamiPuas</p>
+                  <h3 className="font-serif text-xl font-bold text-white">Garansi Amanah & Kualitas</h3>
+                  <p className="text-xs text-forest-200 font-medium">#TugasBeresKamiPuas</p>
                 </div>
               </div>
 
               <blockquote className="text-sm text-gray-200 italic leading-relaxed border-l-2 border-emerald-400 pl-4">
-                &ldquo;Tugas Anda adalah prioritas kami. Kami berkomitmen memberikan hasil terbaik dengan ketelitian tinggi agar Anda lulus tanpa drama.&rdquo;
+                &ldquo;Tugas dan skripsi Anda adalah prioritas kami. Kami berkomitmen memberikan hasil terbaik dengan ketelitian tinggi agar Anda lulus tanpa drama.&rdquo;
               </blockquote>
 
-              <div className="grid grid-cols-2 gap-4 border-t border-forest-800 pt-4 text-xs">
+              <div className="grid grid-cols-2 gap-4 border-t border-forest-800/80 pt-5 text-xs">
                 <div>
-                  <p className="text-forest-300 uppercase tracking-widest font-bold text-[10px]">Lokasi Tim</p>
-                  <p className="font-semibold text-white mt-0.5">Tangerang & Jabodetabek</p>
+                  <p className="text-forest-300 uppercase tracking-widest font-bold text-[10px]">Wilayah Layanan</p>
+                  <p className="font-semibold text-white mt-0.5">Tangerang & Seluruh Indonesia</p>
                 </div>
                 <div>
-                  <p className="text-forest-300 uppercase tracking-widest font-bold text-[10px]">Instagram</p>
+                  <p className="text-forest-300 uppercase tracking-widest font-bold text-[10px]">Instagram Resmi</p>
                   <p className="font-semibold text-white mt-0.5">@jokiskripsiku.tng</p>
                 </div>
               </div>
@@ -437,10 +522,10 @@ export default function LandingPage() {
                 href="https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku,%20saya%20ingin%20tanya%20layanan"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block"
+                className="block pt-2"
               >
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5">
-                  <MessageCircle className="h-4 w-4 mr-1.5" /> Hubungi Tim Langsung via WhatsApp
+                <Button className="w-full rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 shadow-md transition-all">
+                  <MessageCircle className="h-4 w-4 mr-2" /> Hubungi Tim Langsung via WhatsApp
                 </Button>
               </a>
             </div>
@@ -449,43 +534,45 @@ export default function LandingPage() {
       </section>
 
       {/* Transparent Escrow System */}
-      <section id="sistem-rekber" className="px-4 py-20 sm:px-6 lg:px-8 bg-surface-muted border-b border-gray-200">
+      <section id="sistem-rekber" className="px-6 py-24 lg:px-10 bg-[#F8F9FA] border-b border-gray-200">
         <div className="mx-auto max-w-5xl text-center space-y-4">
-          <Badge variant="burgundy">Sistem Rekber Amanah</Badge>
-          <h2 className="font-serif text-3xl font-bold text-gray-900 sm:text-4xl">
+          <span className="text-[11px] font-bold tracking-[0.16em] uppercase text-burgundy-800 bg-burgundy-50 px-3.5 py-1 rounded-full border border-burgundy-200">
+            Sistem Rekber Transparan
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900">
             Bagaimana Dana dan Tugas Anda Terlindungi?
           </h2>
           <p className="text-sm text-gray-600 max-w-2xl mx-auto">
             Transaksi aman dan transparan. Tidak ada transfer langsung tanpa hasil nyata.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 text-left">
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-xs">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-forest-800 text-white mb-4">
-                <Lock className="h-5 w-5" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10 text-left">
+            <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-xs">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-forest-900 text-white mb-5">
+                <Lock className="h-5 w-5 text-emerald-400" />
               </div>
               <h3 className="font-serif font-bold text-base text-gray-900">1. Setor ke Rekber Resmi</h3>
-              <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+              <p className="text-xs text-gray-500 mt-2.5 leading-relaxed">
                 Anda mentransfer biaya ke rekening bersama resmi platform (BCA 8801928371 a.n PT Joki Skripsi Indonesia). Dana berstatus <strong>HELD</strong> aman.
               </p>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-xs">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-burgundy-700 text-white mb-4">
-                <FileCheck2 className="h-5 w-5" />
+            <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-xs">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-burgundy-800 text-white mb-5">
+                <FileCheck2 className="h-5 w-5 text-rose-300" />
               </div>
               <h3 className="font-serif font-bold text-base text-gray-900">2. Pengerjaan & Cek Turnitin</h3>
-              <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+              <p className="text-xs text-gray-500 mt-2.5 leading-relaxed">
                 Tim mengerjakan tugas/skripsi sesuai instruksi Anda, menyertakan uji plagiasi Turnitin, dan mengunggah draf ke portal dokumen aman.
               </p>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-xs">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-700 text-white mb-4">
-                <ShieldCheck className="h-5 w-5" />
+            <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-xs">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-800 text-white mb-5">
+                <ShieldCheck className="h-5 w-5 text-emerald-200" />
               </div>
               <h3 className="font-serif font-bold text-base text-gray-900">3. ACC & Rilis Dana</h3>
-              <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+              <p className="text-xs text-gray-500 mt-2.5 leading-relaxed">
                 Anda memeriksa hasil pengerjaan. Jika masih ada revisi, tim segera perbaiki. Dana baru dicairkan setelah Anda puas dan menyetujui (Approved).
               </p>
             </div>
@@ -493,26 +580,30 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Bottom CTA Banner (Poster Theme) */}
-      <section className="px-4 py-16 sm:px-6 lg:px-8 bg-forest-950 text-white text-center relative overflow-hidden">
+      {/* Bottom CTA Banner */}
+      <section className="px-6 py-20 lg:px-10 bg-forest-950 text-white text-center relative overflow-hidden">
         <div className="mx-auto max-w-4xl space-y-6 relative z-10">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1 text-xs font-semibold text-emerald-300">
             <span>#TUGASBERESKAMIPUAS</span>
           </div>
 
-          <h2 className="font-serif text-3xl font-extrabold sm:text-4xl text-white">
-            Kerjakan Tugas Anda Bersama Kami!<br />
-            <span className="text-emerald-400">Hasil Maksimal Tanpa Drama!</span>
+          <h2 className="font-serif text-3xl sm:text-5xl font-extrabold text-white leading-tight">
+            Kerjakan Tugas Anda Bersama Kami.<br />
+            <span className="text-emerald-400">Hasil Maksimal Tanpa Drama.</span>
           </h2>
 
-          <p className="text-sm sm:text-base text-gray-300 max-w-xl mx-auto">
-            Percayakan tugasmu pada yang ahli! Konsultasikan judul, kendala bab skripsi, atau tugas harianmu sekarang juga.
+          <p className="text-sm sm:text-base text-gray-300 max-w-xl mx-auto font-sans leading-relaxed">
+            Percayakan tugas Anda pada yang ahli. Konsultasikan judul, kendala bab skripsi, atau tugas harian Anda sekarang juga.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-3">
             <Link href="/buyer/create-project" className="w-full sm:w-auto">
-              <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold bg-emerald-600 hover:bg-emerald-500 text-white">
-                Pesan Tugas / Skripsi Sekarang <ArrowRight className="h-4 w-4 ml-1.5" />
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full sm:w-auto rounded-full font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3.5 shadow-lg transition-all"
+              >
+                Pesan Tugas / Skripsi Sekarang <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
             <a
@@ -521,7 +612,11 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="w-full sm:w-auto"
             >
-              <Button variant="outline" size="lg" className="w-full sm:w-auto font-semibold border-gray-600 text-white bg-forest-900 hover:bg-forest-850">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto rounded-full font-semibold border-gray-600 text-white bg-forest-900 hover:bg-forest-850 px-7 py-3.5 shadow-xs"
+              >
                 <MessageCircle className="h-4 w-4 mr-2 text-emerald-400" /> Chat WhatsApp Tim Kami
               </Button>
             </a>
@@ -530,33 +625,33 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white px-4 py-12 sm:px-6 lg:px-8 text-xs text-gray-500">
+      <footer className="border-t border-gray-200 bg-white px-6 py-12 lg:px-10 text-xs text-gray-500">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-forest-800 text-white">
-              <GraduationCap className="h-5 w-5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-900 text-white">
+              <GraduationCap className="h-5 w-5 text-emerald-400" />
             </div>
             <div className="text-left">
-              <p className="font-serif text-base font-bold text-forest-900">Jokiskripsiku</p>
+              <p className="font-serif text-base font-bold text-forest-950">Jokiskripsiku</p>
               <p className="text-[10px] text-gray-400 font-medium">Solusi Tugas & Skripsi Anda — Selesai, Cepat, & Amanah!</p>
             </div>
           </div>
 
           <div className="flex items-center gap-6 text-xs text-gray-600">
-            <a href="#layanan" className="hover:text-forest-900 transition-colors">10 Layanan</a>
-            <a href="#sistem-rekber" className="hover:text-forest-900 transition-colors">Sistem Rekber</a>
+            <a href="#layanan" className="hover:text-forest-950 transition-colors">10 Layanan</a>
+            <a href="#sistem-rekber" className="hover:text-forest-950 transition-colors">Sistem Rekber</a>
             <a
               href="https://instagram.com/jokiskripsiku.tng"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-forest-900 font-semibold transition-colors flex items-center gap-1 text-burgundy-700"
+              className="hover:text-forest-950 font-semibold transition-colors flex items-center gap-1 text-burgundy-700"
             >
               Instagram: @jokiskripsiku.tng <ExternalLink className="h-3 w-3" />
             </a>
           </div>
 
           <p className="text-gray-400 text-center sm:text-right">
-            &copy; 2026 Jokiskripsiku Indonesia. Seluruh hak cipta dilindungi.
+            &copy; 2026 Jokiskripsiku Indonesia. Seluruh hak cipta dilindungi undang-undang.
           </p>
         </div>
       </footer>

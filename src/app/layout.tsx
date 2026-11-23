@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/toast';
+import { SmoothScrollProvider } from '@/components/providers/smooth-scroll';
 
 export const metadata: Metadata = {
-  title: 'Joki Skripsi — Safe-Haven Academic Marketplace',
-  description: 'Marketplace layanan pendampingan akademik terkurasi di Indonesia dengan sistem Escrow Rekber dan jaminan anti-plagiarisme.',
+  title: 'Jokiskripsiku — Konsultan Skripsi & Akademik Profesional',
+  description: 'Solusi pengerjaan skripsi, sempro, makalah, dan kebutuhan digital mahasiswa dikerjakan langsung oleh tim ahli independen dengan garansi Turnitin & Rekber amanah.',
 };
 
 export default function RootLayout({
@@ -23,7 +24,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-surface-muted text-gray-900 antialiased selection:bg-forest-100 selection:text-forest-900 font-sans">
-        <ToastProvider>{children}</ToastProvider>
+        <SmoothScrollProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </SmoothScrollProvider>
       </body>
     </html>
   );

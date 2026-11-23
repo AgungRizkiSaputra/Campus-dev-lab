@@ -59,15 +59,6 @@ const config: Config = {
         md: '12px',
         lg: '24px',
       },
-      spacing: {
-        '4': '4px',
-        '8': '8px',
-        '16': '16px',
-        '24': '24px',
-        '32': '32px',
-        '48': '48px',
-        '64': '64px',
-      },
       boxShadow: {
         card: '0 4px 20px -2px rgba(27, 67, 50, 0.05)',
         elevated: '0 10px 30px -4px rgba(27, 67, 50, 0.08)',

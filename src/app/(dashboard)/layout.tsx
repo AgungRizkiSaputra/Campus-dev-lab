@@ -29,7 +29,7 @@ export default function DashboardLayout({
       <Sidebar role={currentUser.role} />
 
       {/* Main Content Area */}
-      <div className="lg:pl-64 flex flex-col min-h-screen">
+      <div className="lg:pl-[260px] flex flex-col min-h-screen">
         <Header user={currentUser} />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto">
