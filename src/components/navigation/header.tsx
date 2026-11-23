@@ -32,7 +32,7 @@ export function Header({ user, onLogout }: HeaderProps) {
     {
       label: 'Keluar',
       icon: <LogOut className="h-4 w-4" />,
-      onClick: onLogout || (() => {}),
+      onClick: onLogout || (() => { }),
       danger: true,
     },
   ];
@@ -41,15 +41,16 @@ export function Header({ user, onLogout }: HeaderProps) {
     <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-gray-200 bg-white/90 backdrop-blur-md px-4 sm:px-6">
       {/* Mobile Brand */}
       <div className="flex items-center gap-2 lg:hidden">
-        <div className="flex h-8 w-8 items-center justify-center rounded bg-forest-800 text-white">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-forest-800 text-white shadow-xs">
           <GraduationCap className="h-5 w-5" />
         </div>
-        <span className="font-serif text-base font-bold text-forest-900">Joki Skripsi</span>
+        <span className="font-serif text-base font-bold text-forest-950">Jokiskripsiku</span>
       </div>
 
       <div className="hidden lg:block text-left">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-          Platform Pendampingan Akademik Terkurasi
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+          <span className="text-forest-900 font-bold">Jokiskripsiku</span>
+          <span>• Solusi Tugas & Skripsi Anda — Selesai, Cepat, & Amanah!</span>
         </p>
       </div>
 

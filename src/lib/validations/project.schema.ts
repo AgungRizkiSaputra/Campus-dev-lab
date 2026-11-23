@@ -1,6 +1,16 @@
 import { z } from 'zod';
 
 export const serviceTypeEnum = z.enum([
+  'SEMPRO',
+  'SKRIPSI',
+  'TUGAS',
+  'UTS_UAS',
+  'MAKALAH',
+  'PPT',
+  'WEBSITE_APP',
+  'UNDANGAN_DIGITAL',
+  'CEK_PLAGIASI',
+  'TURUNIN_PLAGIASI',
   'CONSULTATION',
   'RESEARCH_ASSISTANCE',
   'PROOFREADING',

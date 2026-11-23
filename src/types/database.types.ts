@@ -1,7 +1,21 @@
 export type UserRole = 'buyer' | 'seller' | 'admin';
 export type KycStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 export type ProjectStatus = 'DRAFT' | 'OPEN' | 'BIDDING' | 'IN_PROGRESS' | 'REVIEW' | 'COMPLETED' | 'DISPUTED' | 'REFUNDED';
-export type ServiceType = 'CONSULTATION' | 'RESEARCH_ASSISTANCE' | 'PROOFREADING' | 'FORMATTING';
+export type ServiceType =
+  | 'SEMPRO'
+  | 'SKRIPSI'
+  | 'TUGAS'
+  | 'UTS_UAS'
+  | 'MAKALAH'
+  | 'PPT'
+  | 'WEBSITE_APP'
+  | 'UNDANGAN_DIGITAL'
+  | 'CEK_PLAGIASI'
+  | 'TURUNIN_PLAGIASI'
+  | 'CONSULTATION'
+  | 'RESEARCH_ASSISTANCE'
+  | 'PROOFREADING'
+  | 'FORMATTING';
 export type BiddingStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
 export type MilestoneStatus = 'LOCKED' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REVISION' | 'DISPUTED' | 'PAID';
 export type PaymentVerificationStatus = 'UNPAID' | 'PENDING_VERIFICATION' | 'VERIFIED' | 'REJECTED';
