@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
-import { GraduationCap, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
+import { GraduationCap, ShieldCheck, ArrowRight, UserCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
@@ -35,14 +35,13 @@ export default function RegisterPage() {
       return;
     }
 
-    // Format phone
     let cleanPhone = whatsappNumber.replace(/\D/g, '');
     if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.slice(1);
     if (!cleanPhone.startsWith('62')) cleanPhone = '62' + cleanPhone;
 
     setIsLoading(true);
     try {
-      // All public registrations are strictly Klien/Mahasiswa (Buyer)
+      // All public signups are strictly Klien/Mahasiswa (Buyer)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -61,7 +60,7 @@ export default function RegisterPage() {
       if (error) {
         toast({
           type: 'error',
-          title: 'Registrasi Gagal',
+          title: 'Pendaftaran Gagal',
           message: error.message,
         });
         return;
@@ -70,12 +69,12 @@ export default function RegisterPage() {
       toast({
         type: 'success',
         title: 'Pendaftaran Berhasil',
-        message: 'Kode OTP 2FA telah dikirim ke WhatsApp Anda.',
+        message: 'Kode OTP keamanan telah dikirim ke WhatsApp Anda.',
       });
 
-      router.push(`/verify-otp?userId=${data.user?.id}&phone=${encodeURIComponent(cleanPhone)}`);
+      router.push(`/verify-otp?userId=${data.user?.id}&role=buyer&phone=${encodeURIComponent(cleanPhone)}`);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem';
+      const message = err instanceof Error ? err.message : 'Terjadi gangguan sistem';
       toast({
         type: 'error',
         title: 'Kesalahan Sistem',
@@ -87,41 +86,41 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-surface-muted py-12">
-      <div className="w-full max-w-lg space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[#FBFBFC] py-20">
+      <div className="w-full max-w-lg space-y-7">
         {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-forest-800 text-white shadow-md">
-              <GraduationCap className="h-7 w-7" />
+        <div className="text-center space-y-2.5">
+          <Link href="/" className="inline-flex items-center gap-3 group">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-900 text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
+              <GraduationCap className="h-7 w-7 text-emerald-400" />
             </div>
           </Link>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-forest-950">
-            Daftar Akun Klien
+          <h1 className="font-serif text-3xl font-extrabold text-forest-950 tracking-tight">
+            Daftar Akun Mahasiswa
           </h1>
-          <p className="text-xs text-gray-500 uppercase tracking-widest font-semibold">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-[0.16em]">
             Jokiskripsiku • Solusi Tugas & Skripsi Amanah
           </p>
         </div>
 
         {/* Exclusive Team Trust Notice */}
-        <div className="rounded-xl border border-forest-200 bg-forest-50/80 p-4 text-left shadow-sm">
+        <div className="rounded-2xl border border-forest-200 bg-forest-50/80 p-4 text-left shadow-xs">
           <div className="flex items-start gap-3">
-            <ShieldCheck className="h-5 w-5 text-forest-800 mt-0.5 flex-shrink-0" />
+            <ShieldCheck className="h-5 w-5 text-emerald-700 mt-0.5 flex-shrink-0" />
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-forest-900">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-forest-950">
                 Pengerjaan Langsung oleh Tim Ahli Inti
               </h2>
               <p className="text-xs text-forest-800 mt-1 leading-relaxed">
-                Semua pesanan Anda dikerjakan langsung oleh tim konsultan internal kami (tanpa perantara/calo liar). Transaksi dilindungi garansi revisi & sistem Rekber 100% amanah.
+                Pesanan Anda ditangani langsung secara privat oleh tim internal kami (tanpa perantara/calo liar). Seluruh transaksi dilindungi sistem Rekber resmi dan garansi revisi.
               </p>
             </div>
           </div>
         </div>
 
         {/* Registration Card */}
-        <Card className="border-gray-200 shadow-elevated bg-white">
-          <CardContent className="pt-6">
+        <Card className="border-gray-200/90 shadow-elevated bg-white rounded-3xl p-2">
+          <CardContent className="pt-6 px-6 pb-6 text-left">
             <form onSubmit={handleRegister} className="space-y-4">
               <Input
                 label="Nama Lengkap Mahasiswa"
@@ -131,7 +130,7 @@ export default function RegisterPage() {
                 required
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Email Aktif"
                   type="email"
@@ -145,7 +144,7 @@ export default function RegisterPage() {
                   placeholder="08123456789"
                   value={whatsappNumber}
                   onChange={(e) => setWhatsappNumber(e.target.value)}
-                  helperText="Format: 08xx / 628xx untuk notifikasi progres"
+                  helperText="Untuk pengiriman draf & notifikasi"
                   required
                 />
               </div>
@@ -159,29 +158,43 @@ export default function RegisterPage() {
                 required
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Input
-                  label="Universitas / Kampus"
-                  placeholder="Contoh: UGM / UI"
-                  value={university}
-                  onChange={(e) => setUniversity(e.target.value)}
-                />
-                <Input
-                  label="Fakultas"
-                  placeholder="Contoh: Teknik"
-                  value={faculty}
-                  onChange={(e) => setFaculty(e.target.value)}
-                />
-                <Input
-                  label="Jurusan / Prodi"
-                  placeholder="Informatika"
-                  value={major}
-                  onChange={(e) => setMajor(e.target.value)}
-                />
+              <div className="border-t border-gray-100 pt-4 mt-2">
+                <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
+                  Informasi Kampus
+                </p>
+                <div className="space-y-3">
+                  <Input
+                    label="Universitas / Institut"
+                    placeholder="Contoh: Universitas Indonesia / UGM"
+                    value={university}
+                    onChange={(e) => setUniversity(e.target.value)}
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Fakultas"
+                      placeholder="Contoh: Teknik / Ekonomi"
+                      value={faculty}
+                      onChange={(e) => setFaculty(e.target.value)}
+                    />
+                    <Input
+                      label="Jurusan / Program Studi"
+                      placeholder="Contoh: Informatika / Manajemen"
+                      value={major}
+                      onChange={(e) => setMajor(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="pt-2">
-                <Button variant="primary" size="lg" type="submit" className="w-full font-bold" isLoading={isLoading}>
+              <div className="pt-4">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  type="submit"
+                  className="w-full rounded-xl bg-forest-900 hover:bg-forest-800 text-white font-bold py-3 shadow-sm transition-all"
+                  isLoading={isLoading}
+                >
                   Daftar & Lanjutkan ke Verifikasi <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </div>
@@ -189,10 +202,11 @@ export default function RegisterPage() {
           </CardContent>
         </Card>
 
+        {/* Footer Link */}
         <p className="text-center text-xs text-gray-500">
           Sudah memiliki akun terdaftar?{' '}
-          <Link href="/login" className="font-bold text-forest-800 hover:underline">
-            Masuk Sekarang
+          <Link href="/login" className="font-bold text-forest-900 hover:underline">
+            Masuk ke Portal
           </Link>
         </p>
       </div>

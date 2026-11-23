@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/navigation/sidebar';
 import { Header } from '@/components/navigation/header';
 import { BottomNav } from '@/components/navigation/bottom-nav';
@@ -10,22 +11,59 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Mock current user for foundation test - defaults to buyer, can be toggled
-  const [currentUser] = useState<{
+  const pathname = usePathname();
+
+  // Dynamically determine role based on active route
+  const activeRole: 'buyer' | 'seller' | 'admin' = pathname.startsWith('/admin')
+    ? 'admin'
+    : pathname.startsWith('/seller')
+    ? 'seller'
+    : 'buyer';
+
+  const [currentUser, setCurrentUser] = useState<{
     name: string;
     email: string;
     role: 'buyer' | 'seller' | 'admin';
     isVerified: boolean;
   }>({
-    name: 'Dimas Pratama',
-    email: 'dimas.pratama@kampus.ac.id',
-    role: 'buyer',
+    name:
+      activeRole === 'admin'
+        ? 'Administrator Platform'
+        : activeRole === 'seller'
+        ? 'Tim Inti Jokiskripsiku'
+        : 'Dimas Pratama',
+    email:
+      activeRole === 'admin'
+        ? 'admin@jokiskripsi.com'
+        : activeRole === 'seller'
+        ? 'tim@jokiskripsi.com'
+        : 'dimas.pratama@kampus.ac.id',
+    role: activeRole,
     isVerified: true,
   });
 
+  useEffect(() => {
+    setCurrentUser({
+      name:
+        activeRole === 'admin'
+          ? 'Administrator Platform'
+          : activeRole === 'seller'
+          ? 'Tim Inti Jokiskripsiku'
+          : 'Dimas Pratama',
+      email:
+        activeRole === 'admin'
+          ? 'admin@jokiskripsi.com'
+          : activeRole === 'seller'
+          ? 'tim@jokiskripsi.com'
+          : 'dimas.pratama@kampus.ac.id',
+      role: activeRole,
+      isVerified: true,
+    });
+  }, [activeRole]);
+
   return (
     <div className="min-h-screen bg-surface-muted">
-      {/* Desktop Sidebar (Fixed Left) */}
+      {/* Desktop Sidebar (Fixed Left 260px) */}
       <Sidebar role={currentUser.role} />
 
       {/* Main Content Area */}

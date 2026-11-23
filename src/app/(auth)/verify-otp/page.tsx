@@ -14,6 +14,7 @@ function VerifyOtpContent() {
   const { toast } = useToast();
 
   const phone = searchParams.get('phone') || '08123456789';
+  const role = searchParams.get('role') || 'buyer';
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
@@ -55,7 +56,7 @@ function VerifyOtpContent() {
     if (code.length !== 6) {
       toast({
         type: 'error',
-        title: 'Kode Tidak Lengkap',
+        title: 'Kode Belum Lengkap',
         message: 'Mohon masukkan 6 digit kode OTP.',
       });
       return;
@@ -71,7 +72,7 @@ function VerifyOtpContent() {
         message: 'Nomor WhatsApp Anda telah terverifikasi aman.',
       });
 
-      router.push('/buyer');
+      router.push(`/${role}`);
     } catch {
       toast({
         type: 'error',

@@ -2,9 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Bell, GraduationCap, User, LogOut, FileText, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface HeaderProps {
   user?: {
@@ -18,16 +20,28 @@ interface HeaderProps {
 }
 
 export function Header({ user, onLogout }: HeaderProps) {
+  const pathname = usePathname();
+
   const profileMenuItems = [
     {
       label: 'Profil Pengguna',
       icon: <User className="h-4 w-4" />,
-      onClick: () => window.location.href = '/profile',
+      onClick: () => (window.location.href = '/profile'),
     },
     {
-      label: 'Ketentuan Layanan',
+      label: 'Mode Mahasiswa (Klien)',
+      icon: <GraduationCap className="h-4 w-4" />,
+      onClick: () => (window.location.href = '/buyer'),
+    },
+    {
+      label: 'Mode Tim Inti (Pengerja)',
+      icon: <Sparkles className="h-4 w-4" />,
+      onClick: () => (window.location.href = '/seller'),
+    },
+    {
+      label: 'Mode Administrator',
       icon: <FileText className="h-4 w-4" />,
-      onClick: () => window.location.href = '/terms',
+      onClick: () => (window.location.href = '/admin'),
     },
     {
       label: 'Keluar',
@@ -47,16 +61,42 @@ export function Header({ user, onLogout }: HeaderProps) {
         <span className="font-serif text-base font-bold text-forest-950">Jokiskripsiku</span>
       </div>
 
-      {/* Desktop Clean Breadcrumb / Status */}
-      <div className="hidden lg:flex items-center gap-2 text-left">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forest-50 border border-forest-200 text-xs font-bold text-forest-900">
-          <Sparkles className="h-3.5 w-3.5 text-forest-700" />
-          <span>Jokiskripsiku Portal</span>
-        </span>
-        <span className="text-gray-300">/</span>
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Layanan Resmi Tim Inti
-        </span>
+      {/* Desktop Quick Role View Switcher */}
+      <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-xl bg-surface-muted border border-gray-200 text-xs">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2">Akses Portal:</span>
+        <Link
+          href="/buyer"
+          className={cn(
+            'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+            user?.role === 'buyer'
+              ? 'bg-forest-900 text-white shadow-xs'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+          )}
+        >
+          Mahasiswa (Klien)
+        </Link>
+        <Link
+          href="/seller"
+          className={cn(
+            'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+            user?.role === 'seller'
+              ? 'bg-forest-900 text-white shadow-xs'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+          )}
+        >
+          Tim Inti (Joki)
+        </Link>
+        <Link
+          href="/admin"
+          className={cn(
+            'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+            user?.role === 'admin'
+              ? 'bg-forest-900 text-white shadow-xs'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+          )}
+        >
+          Admin Rekber
+        </Link>
       </div>
 
       {/* Right Actions */}
@@ -81,12 +121,14 @@ export function Header({ user, onLogout }: HeaderProps) {
                   </Badge>
                 )}
               </div>
-              <p className="text-[11px] text-gray-400 capitalize">{user.role === 'buyer' ? 'Mahasiswa (Klien)' : user.role}</p>
+              <p className="text-[11px] text-gray-400 capitalize font-medium">
+                {user.role === 'admin' ? 'Administrator' : user.role === 'seller' ? 'Tim Pengerja' : 'Mahasiswa'}
+              </p>
             </div>
 
             <DropdownMenu
               trigger={
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-800 text-xs font-bold text-white shadow-sm ring-2 ring-forest-100 cursor-pointer">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-forest-900 text-xs font-bold text-white shadow-sm ring-2 ring-forest-100 cursor-pointer">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
               }
@@ -103,7 +145,7 @@ export function Header({ user, onLogout }: HeaderProps) {
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-forest-800 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-forest-700 shadow-sm transition-all"
+              className="rounded-full bg-forest-900 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-forest-800 shadow-sm transition-all"
             >
               Daftar
             </Link>
