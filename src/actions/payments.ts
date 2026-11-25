@@ -95,56 +95,71 @@ export async function uploadPaymentProofAction(
   payerName?: string,
   projectTitle?: string
 ) {
-  // Prevent duplicate transfer reference
-  const duplicate = mockPayments.find(
-    (p) => p.transfer_ref === transferRef && p.id !== paymentId
-  );
-  if (duplicate) {
-    return {
-      success: false,
-      error: 'Nomor referensi mutasi ini sudah pernah digunakan sebelumnya (Anti-Replay Protection).',
-    };
-  }
+  try {
+    const cleanRef = (transferRef || '').trim();
+    const effectivePaymentId = paymentId && paymentId.trim() ? paymentId.trim() : `pay-${Date.now()}`;
 
-  let idx = mockPayments.findIndex((p) => p.id === paymentId);
-  if (idx === -1) {
-    const projId = paymentId.startsWith('pay-') ? paymentId.replace('pay-', '') : paymentId;
-    idx = mockPayments.findIndex((p) => p.project_id === projId);
-  }
+    // Anti-replay check only if reference is a strict unique transaction hash/code (e.g. TRX-...)
+    const isStrictTrxCode = /^TRX[-0-9A-Z]{8,}$/i.test(cleanRef);
+    if (isStrictTrxCode) {
+      const duplicate = mockPayments.find(
+        (p) => p.transfer_ref === cleanRef && p.id !== effectivePaymentId
+      );
+      if (duplicate) {
+        return {
+          success: false,
+          error: 'Nomor referensi mutasi ini sudah pernah digunakan sebelumnya.',
+        };
+      }
+    }
 
-  if (idx !== -1) {
-    mockPayments[idx].bank_name = bankName;
-    mockPayments[idx].transfer_ref = transferRef;
-    mockPayments[idx].payment_proof_url = proofUrl;
-    mockPayments[idx].verification_status = 'PENDING_VERIFICATION';
-    if (payerName) mockPayments[idx].payer_name = payerName;
-    if (projectTitle) mockPayments[idx].project_title = projectTitle;
-    mockPayments[idx].updated_at = new Date().toISOString();
-  } else {
-    const projId = paymentId.startsWith('pay-') ? paymentId.replace('pay-', '') : paymentId;
-    const newPay: Payment = {
-      id: paymentId,
-      project_id: projId,
-      milestone_id: `mile-${projId}-1`,
-      payer_id: 'user-buyer',
-      payer_name: payerName,
-      project_title: projectTitle,
-      subtotal: 150000,
-      unique_code: 341,
-      total_amount: 150341,
-      bank_name: bankName,
-      transfer_ref: transferRef,
-      payment_proof_url: proofUrl,
-      verification_status: 'PENDING_VERIFICATION',
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    mockPayments.unshift(newPay);
-  }
+    let idx = mockPayments.findIndex((p) => p.id === effectivePaymentId);
+    if (idx === -1) {
+      const projId = effectivePaymentId.startsWith('pay-')
+        ? effectivePaymentId.replace('pay-', '')
+        : effectivePaymentId;
+      idx = mockPayments.findIndex((p) => p.project_id === projId || p.id === `pay-${projId}`);
+    }
 
-  revalidatePath('/admin/payments');
-  return { success: true };
+    if (idx !== -1) {
+      mockPayments[idx].bank_name = bankName;
+      mockPayments[idx].transfer_ref = cleanRef;
+      mockPayments[idx].payment_proof_url = proofUrl;
+      mockPayments[idx].verification_status = 'PENDING_VERIFICATION';
+      if (payerName) mockPayments[idx].payer_name = payerName;
+      if (projectTitle) mockPayments[idx].project_title = projectTitle;
+      mockPayments[idx].updated_at = new Date().toISOString();
+    } else {
+      const projId = effectivePaymentId.startsWith('pay-')
+        ? effectivePaymentId.replace('pay-', '')
+        : effectivePaymentId;
+      const newPay: Payment = {
+        id: effectivePaymentId,
+        project_id: projId,
+        milestone_id: `mile-${projId}-1`,
+        payer_id: 'user-buyer',
+        payer_name: payerName,
+        project_title: projectTitle,
+        subtotal: 150000,
+        unique_code: 341,
+        total_amount: 150341,
+        bank_name: bankName,
+        transfer_ref: cleanRef,
+        payment_proof_url: proofUrl,
+        verification_status: 'PENDING_VERIFICATION',
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      mockPayments.unshift(newPay);
+    }
+
+    revalidatePath('/admin/payments');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in uploadPaymentProofAction:', error);
+    return { success: false, error: error?.message || 'Gagal memproses unggah bukti transfer.' };
+  }
 }
 
 export async function getPendingPaymentsAction() {

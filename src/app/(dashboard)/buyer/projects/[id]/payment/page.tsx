@@ -12,6 +12,8 @@ import { formatRupiah, formatDate } from '@/lib/utils';
 import { getProjectByIdAction } from '@/actions/projects';
 import { getProjectMilestonesAction } from '@/actions/milestones';
 import { getOrCreateProjectPaymentAction, uploadPaymentProofAction } from '@/actions/payments';
+import { saveUploadedFile } from '@/lib/file-storage';
+import { getActiveSession } from '@/lib/auth';
 import type { Project } from '@/types/database.types';
 import {
   CreditCard,
@@ -67,6 +69,79 @@ const OFFICIAL_PAYMENT_METHODS = [
   },
 ];
 
+// Helper to compress uploaded images on the client to avoid 1MB Server Action payload & localStorage quota limits
+async function compressImageFile(file: File): Promise<{ dataUrl: string; sizeFormatted: string }> {
+  if (!file.type.startsWith('image/')) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () =>
+        resolve({
+          dataUrl: reader.result as string,
+          sizeFormatted: (file.size / 1024).toFixed(0) + ' KB',
+        });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve({
+            dataUrl: reader.result as string,
+            sizeFormatted: (file.size / 1024).toFixed(0) + ' KB',
+          });
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+        const approxBytes = Math.round((compressedDataUrl.length * 3) / 4);
+        const approxKB = (approxBytes / 1024).toFixed(0) + ' KB';
+        resolve({
+          dataUrl: compressedDataUrl,
+          sizeFormatted: approxKB,
+        });
+      };
+      img.onerror = () => {
+        resolve({
+          dataUrl: reader.result as string,
+          sizeFormatted: (file.size / 1024).toFixed(0) + ' KB',
+        });
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => {
+      resolve({
+        dataUrl: '',
+        sizeFormatted: '0 KB',
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function BuyerPaymentPage() {
   const params = useParams();
   const { toast } = useToast();
@@ -75,6 +150,7 @@ export default function BuyerPaymentPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [accountName, setAccountName] = useState('');
 
   // Payment Scheme Mode: 'FULL' (Lunas di Awal) vs 'MILESTONE' (Termin per Tahap)
   const [paymentMode, setPaymentMode] = useState<'FULL' | 'MILESTONE'>('FULL');
@@ -113,6 +189,22 @@ export default function BuyerPaymentPage() {
     async function loadData() {
       setIsLoading(true);
 
+      let activeUserName = '';
+      if (typeof window !== 'undefined') {
+        try {
+          const authRaw = localStorage.getItem('joki_auth_session');
+          if (authRaw) {
+            const parsed = JSON.parse(authRaw);
+            activeUserName = parsed?.name || '';
+          }
+        } catch {}
+      }
+      if (!activeUserName) {
+        const session = getActiveSession();
+        activeUserName = session?.name || '';
+      }
+      setAccountName(activeUserName);
+
       let currentProject: Project | null = null;
       if (typeof window !== 'undefined') {
         try {
@@ -123,7 +215,11 @@ export default function BuyerPaymentPage() {
             if (foundP) {
               currentProject = foundP;
               if (foundP.payment_mode) setPaymentMode(foundP.payment_mode);
-              if (foundP.transfer_ref) setTransferRef(foundP.transfer_ref);
+              if (foundP.transfer_ref) {
+                setTransferRef(foundP.transfer_ref);
+              } else if (activeUserName) {
+                setTransferRef(activeUserName);
+              }
               if (foundP.sender_bank) setSenderBank(foundP.sender_bank);
               if (foundP.proof_url) {
                 setProofPreview(foundP.proof_url);
@@ -148,6 +244,9 @@ export default function BuyerPaymentPage() {
       }
 
       setProject(currentProject);
+      if (activeUserName) {
+        setTransferRef((prev) => prev || activeUserName);
+      }
 
       const projectBudget = currentProject?.budget_min || 150000;
       setTotalProjectBudget(projectBudget);
@@ -243,35 +342,49 @@ export default function BuyerPaymentPage() {
     });
   };
 
-  // Real File Upload Handler (Picking screenshot from gallery or camera)
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Real File Upload Handler with client-side compression to avoid 1MB server action limits
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 15 * 1024 * 1024) {
       toast({
         type: 'error',
         title: 'Ukuran Terlalu Besar',
-        message: 'Maksimal ukuran foto tangkapan layar adalah 10 MB.',
+        message: 'Maksimal ukuran file foto adalah 15 MB.',
       });
       return;
     }
 
     setFileName(file.name);
-    setFileSize((file.size / 1024).toFixed(0) + ' KB');
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      setProofPreview(result);
-      setProofUrl(result);
+    try {
+      const { dataUrl, sizeFormatted } = await compressImageFile(file);
+      setFileSize(sizeFormatted);
+      setProofPreview(dataUrl);
+      setProofUrl(dataUrl);
+
+      // Save to IndexedDB storage for offline/high-res resilience
+      saveUploadedFile(`payment_proof_${projectId}`, {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        dataUrl,
+      }).catch(() => {});
+
       toast({
         type: 'success',
         title: 'Bukti Dipilih dari Galeri',
-        message: `${file.name} berhasil dimuat. Siap dikirimkan.`,
+        message: `${file.name} (${sizeFormatted}) siap dikirimkan.`,
       });
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('File load error:', err);
+      toast({
+        type: 'error',
+        title: 'Gagal Membaca File',
+        message: 'Tidak dapat memproses file yang dipilih.',
+      });
+    }
   };
 
   const handleRemoveFile = () => {
@@ -287,11 +400,12 @@ export default function BuyerPaymentPage() {
   const handleUploadProof = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!transferRef.trim()) {
+    const cleanSenderName = (transferRef || accountName || '').trim();
+    if (!cleanSenderName) {
       toast({
         type: 'error',
-        title: 'Nama / Referensi Kosong',
-        message: 'Mohon masukkan nama pengirim atau nomor referensi dari m-banking Anda.',
+        title: 'Nama Pengirim Wajib Diisi',
+        message: 'Mohon masukkan nama pengirim atau nama pemilik rekening yang mentransfer.',
       });
       return;
     }
@@ -307,8 +421,8 @@ export default function BuyerPaymentPage() {
 
     setIsSubmitting(true);
     try {
-      let activeUserName = '';
-      if (typeof window !== 'undefined') {
+      let activeUserName = accountName;
+      if (!activeUserName && typeof window !== 'undefined') {
         try {
           const authRaw = localStorage.getItem('joki_auth_session');
           if (authRaw) {
@@ -316,13 +430,25 @@ export default function BuyerPaymentPage() {
           }
         } catch {}
       }
-      const studentName = activeUserName || (project as any)?.student_name || (project as any)?.buyer_name || project?.buyer?.full_name || '';
-      const projTitle = project?.title || '';
+      if (!activeUserName) {
+        const session = getActiveSession();
+        activeUserName = session?.name || '';
+      }
+
+      const studentName =
+        activeUserName ||
+        (project as any)?.student_name ||
+        (project as any)?.buyer_name ||
+        project?.buyer?.full_name ||
+        cleanSenderName;
+      const projTitle = project?.title || 'Pesanan Tugas Mahasiswa';
+      const targetPaymentId =
+        paymentData.id && paymentData.id.trim() ? paymentData.id.trim() : `pay-${projectId}`;
 
       const res = await uploadPaymentProofAction(
-        paymentData.id,
+        targetPaymentId,
         `${selectedMethod.name} (${senderBank})`,
-        transferRef,
+        cleanSenderName,
         proofUrl,
         studentName,
         projTitle
@@ -332,7 +458,7 @@ export default function BuyerPaymentPage() {
         toast({
           type: 'error',
           title: 'Gagal Mengunggah Bukti',
-          message: res.error,
+          message: res.error || 'Terjadi kesalahan saat memproses bukti pembayaran.',
         });
         setIsSubmitting(false);
         return;
@@ -348,7 +474,7 @@ export default function BuyerPaymentPage() {
             if (pIdx !== -1) {
               list[pIdx].payment_status = 'PENDING_VERIFICATION';
               list[pIdx].payment_mode = paymentMode;
-              list[pIdx].transfer_ref = transferRef;
+              list[pIdx].transfer_ref = cleanSenderName;
               list[pIdx].sender_bank = senderBank;
               list[pIdx].proof_url = proofUrl;
               list[pIdx].paid_amount = paymentData.totalAmount;
@@ -364,8 +490,8 @@ export default function BuyerPaymentPage() {
               localStorage.setItem('joki_user_projects', JSON.stringify(list));
             }
           }
-        } catch {
-          // ignore
+        } catch (storageErr) {
+          console.warn('LocalStorage save warning:', storageErr);
         }
       }
 
@@ -377,11 +503,12 @@ export default function BuyerPaymentPage() {
 
       setPaymentData((prev) => ({ ...prev, status: 'PENDING_VERIFICATION' }));
       setIsEditingProof(false);
-    } catch {
+    } catch (err: any) {
+      console.error('Payment submit error:', err);
       toast({
         type: 'error',
         title: 'Kesalahan Sistem',
-        message: 'Terjadi kesalahan jaringan.',
+        message: err?.message || 'Terjadi gangguan jaringan saat mengirim bukti transfer. Silakan coba kembali.',
       });
     } finally {
       setIsSubmitting(false);
@@ -792,11 +919,15 @@ export default function BuyerPaymentPage() {
                   />
 
                   <Input
-                    label="Nama Pengirim / Nomor Ref Mutasi"
-                    placeholder="Contoh: Nama Anda atau No. Ref Struk"
+                    label="Nama Pengirim (Sesuai Akun Anda)"
+                    placeholder={accountName || 'Nama Anda atau No. Ref Struk'}
                     value={transferRef}
                     onChange={(e) => setTransferRef(e.target.value)}
-                    helperText="Tercantum di mutasi m-banking atau struk."
+                    helperText={
+                      accountName
+                        ? `Otomatis disesuaikan dengan akun Anda (${accountName}). Dapat disesuaikan bila rekening pengirim atas nama lain.`
+                        : 'Tercantum di mutasi m-banking atau struk transfer.'
+                    }
                     required
                   />
                 </div>

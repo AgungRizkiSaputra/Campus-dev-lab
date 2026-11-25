@@ -27,6 +27,7 @@ import {
   MessageCircle,
   ExternalLink,
   ChevronRight,
+  UserCheck,
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -88,7 +89,7 @@ export default function LandingPage() {
     {
       num: '03',
       title: 'Amankan Dana di Rekber Resmi',
-      desc: 'Transfer deposit ke rekening resmi platform (BCA 888 166 1730, SeaBank 901478587082, ShopeePay 087786720942 a.n ACEVA ARIE SADEWA). Dana berstatus HELD aman 100%.',
+      desc: 'Deposit diamankan dalam sistem Rekber Escrow platform Jokiskripsiku. Dana berstatus HELD aman 100% dan terlindungi hingga naskah tugas Anda di-ACC.',
     },
     {
       num: '04',
@@ -246,34 +247,30 @@ export default function LandingPage() {
           </nav>
 
           {/* Action CTAs */}
-          <div className="flex items-center gap-4">
-            <a
-              href={
-                currentUser
-                  ? `https://wa.me/6281234567890?text=${encodeURIComponent(`Halo Tim Jokiskripsiku, saya ${currentUser.name} (Akun: ${currentUser.email}) ingin konsultasi pesanan.`)}`
-                  : 'https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku,%20saya%20ingin%20konsultasi%20tugas/skripsi'
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-xs hover:border-emerald-500 hover:text-emerald-800 transition-all"
-            >
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Tanya WhatsApp</span>
-            </a>
+          <div className="flex items-center gap-3">
             {currentUser ? (
               <Link
                 href={`/${currentUser.role}`}
-                className="text-xs font-bold uppercase tracking-wider text-forest-900 bg-forest-50 border border-forest-200 rounded-full px-3 py-1.5 hover:bg-forest-100 transition-colors"
+                className="text-xs font-bold uppercase tracking-wider text-forest-900 bg-forest-50 border border-forest-200 rounded-full px-4 py-2 hover:bg-forest-100 transition-colors"
               >
                 Dashboard
               </Link>
             ) : (
-              <Link
-                href="/login"
-                className="text-xs font-bold uppercase tracking-wider text-gray-600 hover:text-forest-950 px-2 py-1.5 transition-colors"
-              >
-                Masuk
-              </Link>
+              <>
+                <Link
+                  href="/login"
+                  className="text-xs font-bold uppercase tracking-wider text-gray-600 hover:text-forest-950 px-3 py-2 transition-colors"
+                >
+                  Masuk
+                </Link>
+                <Link
+                  href="/register"
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-xs hover:border-emerald-500 hover:text-emerald-800 transition-all"
+                >
+                  <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Daftar</span>
+                </Link>
+              </>
             )}
             <Link href={currentUser ? '/buyer/create-project' : '/login?redirect=/buyer/create-project'}>
               <Button
@@ -352,14 +349,8 @@ export default function LandingPage() {
                 Pilih Layanan & Pesan <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
-            <a
-              href={
-                currentUser
-                  ? `https://wa.me/6281234567890?text=${encodeURIComponent(`Halo Tim Jokiskripsiku, saya ${currentUser.name} mau diskusi mengenai tugas/skripsi.`)}`
-                  : 'https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku,%20mau%20konsultasi%20tugas/skripsi%20saya'
-              }
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="#layanan"
               className="w-full sm:w-auto"
             >
               <Button
@@ -367,9 +358,9 @@ export default function LandingPage() {
                 size="lg"
                 className="w-full sm:w-auto rounded-full border-gray-300 text-gray-800 bg-white hover:bg-gray-50 px-7 py-3.5 font-semibold shadow-xs transition-all hover:border-gray-400"
               >
-                <MessageCircle className="h-4 w-4 mr-2 text-emerald-600" /> Diskusi via WhatsApp
+                <BookOpen className="h-4 w-4 mr-2 text-emerald-600" /> Jelajahi 10 Layanan
               </Button>
-            </a>
+            </Link>
           </motion.div>
 
           {/* High-End Trust Label */}
@@ -577,9 +568,9 @@ export default function LandingPage() {
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-forest-900 text-white mb-5">
                 <Lock className="h-5 w-5 text-emerald-400" />
               </div>
-              <h3 className="font-serif font-bold text-base text-gray-900">1. Setor ke Rekber Resmi</h3>
+              <h3 className="font-serif font-bold text-base text-gray-900">1. Deposit Rekber Aman</h3>
               <p className="text-xs text-gray-500 mt-2.5 leading-relaxed">
-                Anda mentransfer biaya ke rekening resmi platform (BCA, SeaBank, atau ShopeePay a.n ACEVA ARIE SADEWA). Dana berstatus <strong>HELD</strong> aman.
+                Anda mendepositkan biaya ke rekening bersama resmi platform Jokiskripsiku. Dana berstatus <strong>HELD</strong> aman dan tidak dirilis sebelum Anda menyetujui hasil pengerjaan.
               </p>
             </div>
 
@@ -606,181 +597,141 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Official Payment Accounts & Contact Section (Sesuai Instagram @jokiskripsiku.tng) */}
-      <section id="kontak-resmi" className="px-6 py-20 lg:px-10 bg-white border-b border-gray-200">
+      {/* Keamanan Layanan & Sistem Rekber Escrow (Bebas Data Pribadi Publik) */}
+      <section id="standar-layanan" className="px-6 py-20 lg:px-10 bg-white border-b border-gray-200">
         <div className="mx-auto max-w-6xl">
           <div className="text-center space-y-3 mb-12">
             <span className="text-[11px] font-bold tracking-[0.16em] uppercase text-emerald-800 bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-200">
-              Kontak &amp; Rekening Resmi
+              Standar Layanan &amp; Proteksi Mahasiswa
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl font-extrabold text-forest-950">
-              Butuh Jasa Kami? Hubungi Kami &amp; Pesan Sekarang!
+              Komitmen Keamanan Akademik &amp; Garansi Resmi
             </h2>
             <p className="text-sm text-gray-600 max-w-xl mx-auto">
-              Biar proses konsultasi dan transaksi Anda makin cepat &amp; lancar, simpan info kontak WhatsApp dan metode pembayaran resmi kami berikut.
+              Seluruh proses bimbingan, pengerjaan tugas, dan transaksi keuangan dilakukan secara terintegrasi melalui sistem platform resmi berstandar tinggi.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-            {/* Left Card: 4 Jaminan & WhatsApp Admin */}
+            {/* Left Card: Sistem Konsultasi & Ruang Kerja Terproteksi */}
             <div className="rounded-3xl border border-forest-100 bg-gradient-to-br from-forest-900 to-forest-950 text-white p-7 sm:p-9 flex flex-col justify-between shadow-card">
               <div className="space-y-6">
                 <div>
                   <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
-                    Official Support
+                    Layanan Terintegrasi
                   </span>
                   <h3 className="font-serif text-2xl font-bold text-white mt-1">
-                    Nomor WhatsApp Resmi Admin
+                    Ruang Kerja &amp; Konsultasi Terproteksi
                   </h3>
                   <p className="text-xs text-gray-300 mt-1.5 leading-relaxed">
-                    Mau order atau tanya-tanya dulu seputar judul, bab skripsi, atau tugas harian? Tim konsultan kami siap merespons cepat.
+                    Setiap mahasiswa mendapatkan ruang kerja privat untuk berdiskusi materi, menyepakati instruksi dosen, dan mengunggah panduan kampus secara rahasia.
                   </p>
                 </div>
 
-                {/* 2 WhatsApp Admins */}
-                <div className="space-y-3">
-                  <a
-                    href="https://wa.me/62881010290185?text=Halo%20Admin%201%20Jokiskripsiku,%20mau%20konsultasi%20tugas/skripsi"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 transition-all text-white group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
-                        <MessageCircle className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <span className="text-[11px] text-emerald-300 font-semibold uppercase tracking-wider">Admin 1</span>
-                        <p className="font-mono text-base font-bold text-white group-hover:text-emerald-300 transition-colors">
-                          0881010290185
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                      Chat WA &rarr;
+                {/* 4 Brand Pillars */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 text-xs space-y-1">
+                    <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="h-4 w-4" /> Live Chat Privat
                     </span>
-                  </a>
-
-                  <a
-                    href="https://wa.me/6287786720942?text=Halo%20Admin%202%20Jokiskripsiku,%20mau%20konsultasi%20tugas/skripsi"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 transition-all text-white group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
-                        <MessageCircle className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <span className="text-[11px] text-emerald-300 font-semibold uppercase tracking-wider">Admin 2</span>
-                        <p className="font-mono text-base font-bold text-white group-hover:text-emerald-300 transition-colors">
-                          087786720942
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                      Chat WA &rarr;
+                    <p className="text-[11px] text-gray-300 leading-tight">
+                      Ruang obrolan terenkripsi langsung dengan tim pengerja di dashboard pesanan Anda.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 text-xs space-y-1">
+                    <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="h-4 w-4" /> Bebas Revisi
                     </span>
-                  </a>
+                    <p className="text-[11px] text-gray-300 leading-tight">
+                      Pendampingan revisi tanpa batas hingga naskah tugas disetujui (ACC) dosen.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 text-xs space-y-1">
+                    <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="h-4 w-4" /> 100% Confidential
+                    </span>
+                    <p className="text-[11px] text-gray-300 leading-tight">
+                      Privasi identitas mahasiswa, judul, dan data kampus dijamin terlindungi ketat.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 text-xs space-y-1">
+                    <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="h-4 w-4" /> Progres Real-Time
+                    </span>
+                    <p className="text-[11px] text-gray-300 leading-tight">
+                      Pantau pengerjaan bab demi bab dan unduh berkas draf kapan saja dari dashboard.
+                    </p>
+                  </div>
                 </div>
 
-                {/* 4 Brand Pillars from Flyer */}
-                <div className="grid grid-cols-2 gap-2.5 pt-2">
-                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-xs">
-                    <span className="text-emerald-400 font-bold block">✓ Profesional</span>
-                    <p className="text-[11px] text-gray-300 mt-0.5">Dikerjakan tim berpengalaman</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-xs">
-                    <span className="text-emerald-400 font-bold block">✓ Tepat Waktu</span>
-                    <p className="text-[11px] text-gray-300 mt-0.5">Pengerjaan sesuai deadline</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-xs">
-                    <span className="text-emerald-400 font-bold block">✓ Hasil Terbaik</span>
-                    <p className="text-[11px] text-gray-300 mt-0.5">Kualitas terbaik untukmu</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-xs">
-                    <span className="text-emerald-400 font-bold block">✓ Harga Terjangkau</span>
-                    <p className="text-[11px] text-gray-300 mt-0.5">Bersahabat &amp; negotiable</p>
-                  </div>
+                <div className="pt-2">
+                  <Link href={currentUser ? '/buyer/create-project' : '/register'}>
+                    <Button
+                      variant="primary"
+                      size="md"
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-xs"
+                    >
+                      Mulai Konsultasi &amp; Pesan Tugas &rarr;
+                    </Button>
+                  </Link>
                 </div>
               </div>
 
               <div className="pt-6 border-t border-white/10 mt-6 flex items-center justify-between text-xs text-emerald-200">
-                <span>Instagram: <strong>@jokiskripsiku.tng</strong></span>
+                <span>Instagram Resmi: <strong>@jokiskripsiku.tng</strong></span>
                 <span className="font-medium text-gray-400">Mudah, Cepat &amp; Amanah</span>
               </div>
             </div>
 
-            {/* Right Card: Official Payment Methods (a/n ACEVA ARIE SADEWA) */}
+            {/* Right Card: Sistem Rekber Escrow & Garansi Akademik */}
             <div className="rounded-3xl border border-gray-200 bg-surface-muted/30 p-7 sm:p-9 flex flex-col justify-between shadow-xs">
               <div className="space-y-6">
                 <div>
                   <span className="text-xs font-mono font-bold text-burgundy-700 uppercase tracking-wider">
-                    Rekening Bersama Platform
+                    Sistem Rekber Escrow
                   </span>
                   <h3 className="font-serif text-2xl font-bold text-gray-950 mt-1">
-                    Transfer / Pembayaran Resmi
+                    Jaminan Proteksi Dana &amp; Uji Turnitin
                   </h3>
                   <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">
-                    Semua pembayaran rekber resmi hanya melalui rekening di bawah atas nama: <strong className="text-gray-900">ACEVA ARIE SADEWA</strong>.
+                    Sistem rekening bersama resmi platform melindungi hak mahasiswa secara adil. Rekening transfer diverifikasi otomatis dan hanya dibuka di dashboard setelah pesanan dikonfirmasi.
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  {/* BCA */}
-                  <div className="p-4 rounded-2xl bg-white border border-blue-200/80 shadow-2xs flex items-center justify-between">
-                    <div className="flex items-center gap-3.5">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-900 border border-blue-200 font-extrabold text-xs">
-                        BCA
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-gray-900 text-sm">Bank BCA</span>
-                          <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Transfer Bank</span>
-                        </div>
-                        <p className="font-mono text-base font-extrabold text-gray-900 mt-0.5 tracking-wider">
-                          888 166 1730
-                        </p>
-                        <p className="text-[11px] text-gray-500">a/n ACEVA ARIE SADEWA</p>
-                      </div>
+                  <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-2xs flex items-center gap-3.5">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-forest-50 text-forest-900 border border-forest-200 shrink-0">
+                      <Lock className="h-5 w-5 text-forest-800" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">Status Rekber HELD Protection</h4>
+                      <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                        Dana Anda tertahan aman di platform dan tidak diteruskan ke tim sebelum Anda menyetujui hasil pengerjaan.
+                      </p>
                     </div>
                   </div>
 
-                  {/* SeaBank */}
-                  <div className="p-4 rounded-2xl bg-white border border-orange-200/80 shadow-2xs flex items-center justify-between">
-                    <div className="flex items-center gap-3.5">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-orange-900 border border-orange-200 font-extrabold text-[11px]">
-                        SeaBank
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-gray-900 text-sm">SeaBank</span>
-                          <span className="text-[10px] font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">Bank Digital</span>
-                        </div>
-                        <p className="font-mono text-base font-extrabold text-gray-900 mt-0.5 tracking-wider">
-                          901478587082
-                        </p>
-                        <p className="text-[11px] text-gray-500">a/n ACEVA ARIE SADEWA</p>
-                      </div>
+                  <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-2xs flex items-center gap-3.5">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 shrink-0">
+                      <ShieldCheck className="h-5 w-5 text-emerald-700" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">Garansi Resmi Uji Turnitin (&lt; 20%)</h4>
+                      <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                        Naskah skripsi dan makalah riset wajib lolos pengecekan plagiarisme berstandar kampus resmi.
+                      </p>
                     </div>
                   </div>
 
-                  {/* ShopeePay */}
-                  <div className="p-4 rounded-2xl bg-white border border-amber-200/80 shadow-2xs flex items-center justify-between">
-                    <div className="flex items-center gap-3.5">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-900 border border-amber-200 font-extrabold text-[11px]">
-                        Shopee
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-gray-900 text-sm">ShopeePay</span>
-                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">E-Wallet</span>
-                        </div>
-                        <p className="font-mono text-base font-extrabold text-gray-900 mt-0.5 tracking-wider">
-                          087786720942
-                        </p>
-                        <p className="text-[11px] text-gray-500">a/n ACEVA ARIE SADEWA</p>
-                      </div>
+                  <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-2xs flex items-center gap-3.5">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-900 border border-amber-200 shrink-0">
+                      <Wallet className="h-5 w-5 text-amber-700" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">Jaminan Hak Arbitrase &amp; Pengembalian</h4>
+                      <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                        Bila tim tidak memenuhi komitmen instruksi tugas, Anda berhak mengajukan mediasi atau refund dana.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -788,13 +739,13 @@ export default function LandingPage() {
                 <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5">
                   <ShieldCheck className="h-5 w-5 text-emerald-700 shrink-0 mt-0.5" />
                   <p className="text-[11px] leading-relaxed">
-                    <strong>Jaminan Amanah &amp; Rekber Terpercaya:</strong> Mohon pastikan nama penerima transfer adalah <strong>ACEVA ARIE SADEWA</strong> sebelum mengirim dana.
+                    <strong>Keamanan Transaksi:</strong> Rincian nomor rekening resmi terbit secara unik pada invoice tagihan di dashboard setelah pesanan Anda disetujui.
                   </p>
                 </div>
               </div>
 
               <div className="pt-5 border-t border-gray-200/80 mt-6 flex items-center justify-between text-xs text-gray-500">
-                <span>Status Rekber: <strong>HELD Protection</strong></span>
+                <span>Status Rekber: <strong>HELD Protection Terenkripsi</strong></span>
                 <span className="text-forest-900 font-semibold">Amanah &bull; Tepat Waktu &bull; Terpercaya</span>
               </div>
             </div>
@@ -828,34 +779,24 @@ export default function LandingPage() {
                 Pesan Tugas / Skripsi Sekarang <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
-            <a
-              href="https://wa.me/62881010290185?text=Halo%20Admin%201%20Jokiskripsiku,%20mau%20order%20jasa%20tugas/skripsi"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto"
-            >
+            <Link href="/register" className="w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="lg"
                 className="w-full sm:w-auto rounded-full font-semibold border-gray-600 text-white bg-forest-900 hover:bg-forest-850 px-6 py-3.5 shadow-xs"
               >
-                <MessageCircle className="h-4 w-4 mr-2 text-emerald-400" /> WhatsApp Admin 1 (0881010290185)
+                <UserCheck className="h-4 w-4 mr-2 text-emerald-400" /> Buat Akun Mahasiswa
               </Button>
-            </a>
-            <a
-              href="https://wa.me/6287786720942?text=Halo%20Admin%202%20Jokiskripsiku,%20mau%20order%20jasa%20tugas/skripsi"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto"
-            >
+            </Link>
+            <Link href="/login" className="w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="lg"
                 className="w-full sm:w-auto rounded-full font-semibold border-gray-600 text-white bg-forest-900 hover:bg-forest-850 px-6 py-3.5 shadow-xs"
               >
-                <MessageCircle className="h-4 w-4 mr-2 text-emerald-400" /> WhatsApp Admin 2 (087786720942)
+                <ArrowRight className="h-4 w-4 mr-2 text-emerald-400" /> Masuk ke Dashboard
               </Button>
-            </a>
+            </Link>
           </div>
         </div>
       </section>
