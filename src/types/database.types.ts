@@ -59,6 +59,10 @@ export interface Project {
   deadline: string;
   status: ProjectStatus;
   initial_draft_url?: string | null;
+  payment_mode?: 'FULL' | 'MILESTONE' | null;
+  paid_amount?: number;
+  paid_method?: string;
+  payment_status?: string;
   created_at: string;
   updated_at: string;
   buyer?: Profile;
@@ -89,7 +93,12 @@ export interface Milestone {
   status: MilestoneStatus;
   submission_notes?: string | null;
   submission_doc_url?: string | null;
+  submission_doc_name?: string | null;
+  submission_doc_size?: string | null;
+  submission_doc_type?: string | null;
   plagiarism_report_url?: string | null;
+  plagiarism_report_name?: string | null;
+  plagiarism_report_size?: string | null;
   plagiarism_score?: number | null;
   submitted_at?: string | null;
   approved_at?: string | null;
@@ -103,6 +112,8 @@ export interface Payment {
   project_id: string;
   milestone_id: string;
   payer_id: string;
+  payer_name?: string;
+  project_title?: string;
   subtotal: number;
   unique_code: number;
   total_amount: number;

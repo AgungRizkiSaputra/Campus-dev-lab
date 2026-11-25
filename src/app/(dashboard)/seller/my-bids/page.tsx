@@ -26,10 +26,43 @@ export default function MyBidsPage() {
   useEffect(() => {
     async function load() {
       setIsLoading(true);
+      let list: Bidding[] = [];
       const res = await getMyBidsAction();
       if (res.success && res.bids) {
-        setBids(res.bids as Bidding[]);
+        list = [...(res.bids as Bidding[])];
       }
+
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('joki_user_projects');
+          if (raw) {
+            const projects: any[] = JSON.parse(raw);
+            const activeProjects = projects.filter(
+              (p) => p.status === 'IN_PROGRESS' || p.status === 'REVIEW'
+            );
+            for (const ap of activeProjects) {
+              const exists = list.some((b) => b.project_id === ap.id);
+              if (!exists) {
+                list.unshift({
+                  id: `bid-${ap.id}`,
+                  project_id: ap.id,
+                  joki_id: 'user-seller-1',
+                  bid_amount: ap.paid_amount || ap.budget_min || 150000,
+                  proposal: `Pengerjaan resmi Tim Jokiskripsiku untuk tugas: "${ap.title}". Garansi lolos Turnitin < 20% dan bebas revisi dosen.`,
+                  estimated_days: 7,
+                  status: 'ACCEPTED',
+                  created_at: ap.created_at || new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                });
+              }
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      setBids(list);
       setIsLoading(false);
     }
     load();
@@ -118,9 +151,9 @@ export default function MyBidsPage() {
                         <MessageSquare className="h-4 w-4 mr-1 text-emerald-600" /> Chat Klien
                       </Button>
                     </Link>
-                    <Link href={`/shared/documents/${bid.project_id}`}>
-                      <Button variant="primary" size="sm" className="font-bold">
-                        <FileCheck2 className="h-4 w-4 mr-1" /> Dokumen &amp; Turnitin
+                    <Link href={`/seller/tasks/${bid.project_id}`}>
+                      <Button variant="primary" size="sm" className="font-bold bg-forest-900 hover:bg-forest-800 text-white shadow-sm flex items-center gap-1.5">
+                        <FileCheck2 className="h-4 w-4 mr-1 text-emerald-400" /> Kerjakan &amp; Unggah Bab
                       </Button>
                     </Link>
                   </div>

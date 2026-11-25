@@ -41,7 +41,7 @@ export function Dialog({ isOpen, onClose, title, description, children, classNam
         role="dialog"
         aria-modal="true"
         className={cn(
-          'relative z-50 w-full max-w-lg rounded-md bg-white p-6 shadow-xl transition-all sm:rounded-lg animate-in fade-in-0 zoom-in-95',
+          'relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-white p-5 sm:p-6 shadow-xl transition-all animate-in fade-in-0 zoom-in-95',
           className
         )}
       >

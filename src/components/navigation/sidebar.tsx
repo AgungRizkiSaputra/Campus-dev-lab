@@ -15,6 +15,7 @@ import {
   GraduationCap,
   Sparkles,
   MessageCircle,
+  Users,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -39,6 +40,7 @@ export function Sidebar({ role = 'buyer' }: SidebarProps) {
 
   const adminLinks = [
     { href: '/admin', label: 'Ringkasan Sistem', icon: LayoutDashboard },
+    { href: '/admin/users', label: 'Pengguna & Penjoki', icon: Users },
     { href: '/admin/payments', label: 'Verifikasi Rekber', icon: CreditCard },
     { href: '/admin/kyc-queue', label: 'Antrean KYC', icon: ShieldCheck },
     { href: '/admin/arbitration', label: 'Arbitrase Sengketa', icon: Gavel },

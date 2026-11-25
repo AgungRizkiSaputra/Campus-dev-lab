@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/toast';
 import { formatRupiah, formatDate } from '@/lib/utils';
 import { getProjectByIdAction } from '@/actions/projects';
 import { getProjectBidsAction, acceptBidAction } from '@/actions/biddings';
+import { getServiceConfig, serviceRequiresTurnitin } from '@/lib/services-config';
 import type { Project, Bidding } from '@/types/database.types';
 import {
   ShieldCheck,
@@ -48,10 +49,44 @@ export default function BuyerProjectDetailPage() {
 
       if (projRes.success && projRes.project) {
         setProject(projRes.project);
+      } else if (typeof window !== 'undefined') {
+        try {
+          const rawLocal = localStorage.getItem('joki_user_projects');
+          if (rawLocal) {
+            const list: Project[] = JSON.parse(rawLocal);
+            const found = list.find((p) => p.id === projectId);
+            if (found) {
+              setProject(found);
+            }
+          }
+        } catch {
+          // ignore
+        }
       }
+
+      let allBids: Bidding[] = [];
       if (bidsRes.success && bidsRes.bids) {
-        setBids(bidsRes.bids);
+        allBids = [...bidsRes.bids];
       }
+
+      if (typeof window !== 'undefined') {
+        try {
+          const rawLocalBids = localStorage.getItem(`joki_project_bids_${projectId}`);
+          if (rawLocalBids) {
+            const parsedBids: Bidding[] = JSON.parse(rawLocalBids);
+            const seenIds = new Set(allBids.map((b) => b.id));
+            for (const pb of parsedBids) {
+              if (!seenIds.has(pb.id)) {
+                allBids.unshift(pb);
+              }
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      setBids(allBids);
       setIsLoading(false);
     }
     load();
@@ -63,25 +98,40 @@ export default function BuyerProjectDetailPage() {
     setIsAccepting(true);
 
     try {
-      // If bids exist, accept the primary team proposal
-      if (bids.length > 0) {
-        await acceptBidAction(project.id, bids[0].id, bids[0].joki_id);
+      const activeBid = bids[0];
+      const agreedAmount = activeBid?.bid_amount || (project as any).deal_price || project.budget_min;
+
+      // Update project in localStorage so payment invoice uses EXACT agreed price
+      if (typeof window !== 'undefined') {
+        try {
+          const rawLocal = localStorage.getItem('joki_user_projects');
+          if (rawLocal) {
+            const list: Project[] = JSON.parse(rawLocal);
+            const pIdx = list.findIndex((p) => p.id === project.id);
+            if (pIdx !== -1) {
+              list[pIdx].budget_min = agreedAmount;
+              list[pIdx].budget_max = agreedAmount;
+              (list[pIdx] as any).deal_price = agreedAmount;
+              (list[pIdx] as any).paid_amount = agreedAmount;
+              localStorage.setItem('joki_user_projects', JSON.stringify(list));
+            }
+          }
+        } catch {}
       }
-      toast({
-        type: 'success',
-        title: 'Kesepakatan Dikonfirmasi!',
-        message: 'Mengarahkan ke pembayaran Rekber resmi platform...',
-      });
-      router.push(`/buyer/projects/${project.id}/payment`);
+
+      if (activeBid) {
+        await acceptBidAction(project.id, activeBid.id, activeBid.joki_id);
+      }
     } catch {
-      toast({
-        type: 'error',
-        title: 'Gangguan Sistem',
-        message: 'Gagal memproses persetujuan. Silakan coba lagi.',
-      });
-    } finally {
-      setIsAccepting(false);
+      // ignore & continue to payment
     }
+    toast({
+      type: 'success',
+      title: 'Kesepakatan Harga Disetujui',
+      message: 'Membuka tagihan rekening bersama resmi platform...',
+    });
+    router.push(`/buyer/projects/${project.id}/payment`);
+    setIsAccepting(false);
   };
 
   if (isLoading) {
@@ -197,8 +247,16 @@ export default function BuyerProjectDetailPage() {
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 pb-5 border-b border-gray-100">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Badge variant={project.status === 'IN_PROGRESS' ? 'forest' : 'gold'}>
-                {project.status === 'IN_PROGRESS'
+              <Badge variant={
+                (project as any).payment_status === 'PENDING_VERIFICATION'
+                  ? 'gold'
+                  : project.status === 'IN_PROGRESS'
+                  ? 'forest'
+                  : 'gold'
+              }>
+                {(project as any).payment_status === 'PENDING_VERIFICATION'
+                  ? 'MENUNGGU VERIFIKASI MUTASI'
+                  : project.status === 'IN_PROGRESS'
                   ? 'SEDANG DIKERJAKAN'
                   : project.status === 'COMPLETED'
                   ? 'SELESAI ACC'
@@ -249,6 +307,61 @@ export default function BuyerProjectDetailPage() {
             </span>
           </div>
         </div>
+
+        {/* Rencana Pengerjaan: Full Langsung vs 4 Tahap Bertahap */}
+        <div className="pt-4 border-t border-gray-100 space-y-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-forest-900 block">
+            {project.payment_mode === 'FULL'
+              ? `Skema Pengerjaan Penuh Terpadu (${getServiceConfig(project.service_type).name}):`
+              : `Rencana 4 Tahap Pengerjaan Bertahap (${getServiceConfig(project.service_type).name}):`}
+          </span>
+          {project.payment_mode === 'FULL' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+              <div className="rounded-xl bg-emerald-50/80 p-3 border border-emerald-100 space-y-1">
+                <div className="flex items-center gap-1.5 text-emerald-950 font-bold text-xs">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-800 text-white text-[9px] flex-shrink-0">1</span>
+                  <span>Deposit Rekber 100%</span>
+                </div>
+                <p className="text-[10px] text-emerald-800 leading-tight">Dana HELD aman di Rekber platform hingga tugas selesai</p>
+              </div>
+              <div className="rounded-xl bg-forest-50/70 p-3 border border-forest-100/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-forest-950 font-bold text-xs">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-forest-900 text-white text-[9px] flex-shrink-0">2</span>
+                  <span>Pengerjaan Penuh</span>
+                </div>
+                <p className="text-[10px] text-forest-800 leading-tight">Dikerjakan tuntas oleh tim inti Jokiskripsiku</p>
+              </div>
+              <div className="rounded-xl bg-forest-50/70 p-3 border border-forest-100/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-forest-950 font-bold text-xs">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-forest-900 text-white text-[9px] flex-shrink-0">3</span>
+                  <span>Serah Berkas Lengkap</span>
+                </div>
+                <p className="text-[10px] text-forest-800 leading-tight">Naskah lengkap siap diunduh & diperiksa mahasiswa</p>
+              </div>
+              <div className="rounded-xl bg-forest-50/70 p-3 border border-forest-100/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-forest-950 font-bold text-xs">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-forest-900 text-white text-[9px] flex-shrink-0">4</span>
+                  <span>Persetujuan (ACC)</span>
+                </div>
+                <p className="text-[10px] text-forest-800 leading-tight">Persetujuan akhir mahasiswa & pencairan dana Rekber</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+              {getServiceConfig(project.service_type).stages.map((st) => (
+                <div key={st.num} className="rounded-xl bg-forest-50/70 p-3 border border-forest-100/80 space-y-1">
+                  <div className="flex items-center gap-1.5 text-forest-950 font-bold text-xs">
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-forest-900 text-white text-[9px] flex-shrink-0">
+                      {st.num}
+                    </span>
+                    <span className="truncate">{st.title}</span>
+                  </div>
+                  <p className="text-[10px] text-forest-800 leading-tight">{st.desc}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </Card>
 
       {/* Proposal & Kesepakatan Pengerjaan oleh Tim Jokiskripsiku */}
@@ -257,68 +370,204 @@ export default function BuyerProjectDetailPage() {
           Konfirmasi Pengerjaan dari Tim Jokiskripsiku
         </h2>
 
-        {project.status === 'OPEN' || project.status === 'BIDDING' ? (
-          <div className="rounded-2xl border border-forest-200 bg-white p-6 shadow-xs space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-4">
+        {(project as any).payment_status === 'PENDING_VERIFICATION' ? (
+          <div className="rounded-2xl border border-sky-300 bg-sky-50/70 p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-sky-200/80 pb-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-forest-900 text-white shadow-xs">
-                  <ShieldCheck className="h-6 w-6 text-emerald-400" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-900 text-white shadow-xs">
+                  <Clock className="h-6 w-6 text-sky-300 animate-pulse" />
                 </div>
                 <div>
                   <h3 className="font-serif text-base font-bold text-gray-900">
-                    Proposal Pengerjaan Tim Inti Jokiskripsiku
+                    Bukti Pembayaran Sedang Diverifikasi oleh Super Admin
                   </h3>
-                  <p className="text-xs text-forest-800 font-semibold">
-                    Dikerjakan langsung secara privat • Garansi Lolos Turnitin & Bebas Revisi
+                  <p className="text-xs text-sky-900 font-semibold">
+                    Bukti transfer telah masuk antrean pencocokan mutasi bank operasional platform.
                   </p>
                 </div>
               </div>
 
               <div className="text-left sm:text-right">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Biaya Pengerjaan</span>
-                <p className="font-bold text-forest-900 text-xl font-serif">
-                  {formatRupiah(bids[0]?.bid_amount || project.budget_min)}
-                </p>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-sky-800">Status Pembayaran</span>
+                <p className="font-bold text-sky-900 text-sm">Menunggu Mutasi Bank</p>
               </div>
             </div>
 
-            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-              Tim kami telah mempelajari instruksi tugas Anda dan siap memulai pengerjaan sesuai dengan metodologi riset kampus Anda. 
-              Draf pengerjaan akan diserahkan bertahap lengkap dengan sertifikat uji plagiasi Turnitin resmi.
+            <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
+              Tim Jokiskripsiku sedang memverifikasi dana Anda. Setelah dicocokkan dengan mutasi nyata oleh Admin, status akan otomatis beralih menjadi <strong>Sedang Dikerjakan</strong> dan pengerjaan bab segera dimulai.
             </p>
-
-            <div className="rounded-xl bg-forest-50/70 p-4 border border-forest-100 text-xs space-y-1.5 text-forest-900">
-              <div className="flex items-center gap-2 font-bold text-forest-950">
-                <Lock className="h-4 w-4 text-emerald-600" />
-                <span>Mekanisme Pembayaran Aman:</span>
-              </div>
-              <p className="text-forest-800 leading-relaxed">
-                Biaya ditransfer ke rekening bersama resmi platform (BCA 8801928371 a.n PT Joki Skripsi Indonesia). Dana tidak dicairkan sebelum Anda menyetujui (ACC) hasil pengerjaan.
-              </p>
-            </div>
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-3">
               <a
-                href={`https://wa.me/6281234567890?text=Halo%20Tim%20Jokiskripsiku,%20mau%20diskusi%20proyek%20${encodeURIComponent(project.title)}`}
+                href={`https://wa.me/62881010290185?text=Halo%20Admin%20Jokiskripsiku,%20saya%20sudah%20upload%20bukti%20transfer%20untuk%20pesanan%20${encodeURIComponent(project.title)}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button variant="outline" size="md" className="w-full sm:w-auto font-semibold">
-                  <MessageSquare className="h-4 w-4 mr-1.5 text-emerald-600" /> Tanya Dulu via WhatsApp
+                <Button variant="outline" size="md" className="w-full sm:w-auto font-semibold border-sky-300 text-sky-950 hover:bg-sky-100">
+                  <MessageSquare className="h-4 w-4 mr-1.5 text-emerald-600" /> Konfirmasi Cepat ke WA Admin
                 </Button>
               </a>
 
-              <Button
-                variant="primary"
-                size="md"
-                onClick={handleProceedPayment}
-                isLoading={isAccepting}
-                className="w-full sm:w-auto rounded-xl bg-forest-900 hover:bg-forest-800 font-bold px-6 shadow-sm"
-              >
-                Setujui & Lanjut Pembayaran Rekber <ArrowRight className="h-4 w-4 ml-1.5" />
-              </Button>
+              <Link href={`/buyer/projects/${project.id}/payment`} className="w-full sm:w-auto">
+                <Button variant="primary" size="md" className="w-full sm:w-auto rounded-xl bg-sky-900 hover:bg-sky-800 font-bold px-6 shadow-sm text-white">
+                  <CheckCircle2 className="h-4 w-4 mr-1.5 text-sky-300" /> Lihat Tanda Bukti Transfer
+                </Button>
+              </Link>
             </div>
           </div>
+        ) : (project.status === 'OPEN' || project.status === 'BIDDING') ? (
+          bids.length === 0 ? (
+            /* KONDISI 1: Belum ada penawaran/konfirmasi harga dari Penjoki -> Mahasiswa belum bayar, nego/tunggu harga dulu */
+            <div className="rounded-2xl border border-amber-300 bg-amber-50/60 p-6 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-amber-200/80 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-900 text-white shadow-xs">
+                    <Clock className="h-6 w-6 text-amber-300 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-base font-bold text-gray-900">
+                      Pesanan Sedang Ditinjau Tim Penjoki (Menunggu Penawaran Harga)
+                    </h3>
+                    <p className="text-xs text-amber-950 font-semibold">
+                      Tahap Negosiasi &amp; Penentuan Harga Final &bull; Anda belum perlu membayar sekarang
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-left sm:text-right">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900">Rentang Budget Anda</span>
+                  <p className="font-bold text-amber-950 text-base sm:text-lg font-mono">
+                    {formatRupiah(project.budget_min)} &ndash; {formatRupiah(project.budget_max || project.budget_min)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-xs sm:text-sm text-gray-700 leading-relaxed space-y-2">
+                <p>
+                  Instruksi tugas Anda telah berhasil masuk ke antrean kerja tim inti Jokiskripsiku. Saat ini tim pengerja sedang mempelajari detail materi dan tingkat kerumitan tugas untuk menetapkan penawaran harga yang adil dan pas di dalam rentang budget Anda.
+                </p>
+                <div className="rounded-xl bg-white p-3.5 border border-amber-200 text-xs text-amber-950 space-y-1">
+                  <span className="font-bold flex items-center gap-1.5 text-amber-900">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600" /> Alur Pembayaran Aman Jokiskripsiku:
+                  </span>
+                  <p className="text-[11px] text-gray-600 leading-relaxed">
+                    Mahasiswa <strong>tidak langsung membayar</strong> di awal tanpa kejelasan harga. Tim pengerja akan mengajukan penawaran harga final terlebih dahulu. Anda dapat berdiskusi/negosiasi melalui WhatsApp atau Chat, dan pembayaran Rekber baru dilakukan setelah Anda menyetujui harga kesepakatan.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-amber-200/70 pt-3">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-900">
+                  <span className="inline-block h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                  <span>Menunggu Tim Pengerja Menentukan Harga...</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                  <a
+                    href={`https://wa.me/62881010290185?text=Halo%20Admin%201%20Jokiskripsiku,%20saya%20sudah%20ajukan%20pesanan%20${encodeURIComponent(project.title)}%20dengan%20budget%20${formatRupiah(project.budget_min)}-${formatRupiah(project.budget_max || project.budget_min)},%20mau%20diskusi%20harga`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="outline" size="sm" className="font-semibold text-xs border-amber-300 text-amber-950 hover:bg-amber-100">
+                      <MessageSquare className="h-3.5 w-3.5 mr-1 text-emerald-600" /> Nego Cepat WA Admin 1
+                    </Button>
+                  </a>
+
+                  <a
+                    href={`https://wa.me/6287786720942?text=Halo%20Admin%202%20Jokiskripsiku,%20mau%20diskusi%20harga%20pesanan%20${encodeURIComponent(project.title)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="outline" size="sm" className="font-semibold text-xs border-amber-300 text-amber-950 hover:bg-amber-100">
+                      <MessageSquare className="h-3.5 w-3.5 mr-1 text-emerald-600" /> Nego WA Admin 2
+                    </Button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* KONDISI 2: Penjoki telah mengonfirmasi pengerjaan & menentukan harga final -> Mahasiswa tinggal setujui & bayar */
+            <div className="rounded-2xl border-2 border-forest-600 bg-white p-6 shadow-sm space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-900 text-white shadow-xs">
+                    <ShieldCheck className="h-7 w-7 text-emerald-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-950 text-[10px] font-extrabold uppercase tracking-wider border border-emerald-300">
+                        ✓ Penawaran Harga Siap Disetujui
+                      </span>
+                    </div>
+                    <h3 className="font-serif text-lg font-bold text-gray-900 mt-0.5">
+                      Konfirmasi Pengerjaan &amp; Penawaran Harga dari Tim Pengerja
+                    </h3>
+                    <p className="text-xs text-forest-800 font-semibold">
+                      Dikerjakan langsung &bull; {serviceRequiresTurnitin(project.service_type) ? 'Garansi Lolos Turnitin < 20% & Bebas Revisi' : 'Garansi Tuntas & Bebas Revisi'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-left sm:text-right">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Harga Final yang Ditentukan</span>
+                  <p className="font-bold text-forest-900 text-2xl font-serif">
+                    {formatRupiah(bids[0].bid_amount)}
+                  </p>
+                  <span className="text-[10px] text-gray-500 font-medium block">
+                    (Rentang awal Anda: {formatRupiah(project.budget_min)} &ndash; {formatRupiah(project.budget_max || project.budget_min)})
+                  </span>
+                </div>
+              </div>
+
+              {/* Rencana Kerja dari Penjoki */}
+              <div className="rounded-xl bg-forest-50/70 p-4 border border-forest-100 text-xs space-y-2 text-forest-950">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-forest-800 flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Rencana Pengerjaan &amp; Komitmen Tim:
+                  </span>
+                  <span className="text-[11px] font-semibold bg-white px-2.5 py-0.5 rounded border border-forest-200">
+                    Estimasi Pengerjaan: {bids[0].estimated_days} Hari
+                  </span>
+                </div>
+                <p className="text-gray-700 leading-relaxed bg-white p-3 rounded-lg border border-forest-100">
+                  &ldquo;{bids[0].proposal}&rdquo;
+                </p>
+              </div>
+
+              {/* Mekanisme Rekber */}
+              <div className="rounded-xl bg-gray-50 p-3.5 border border-gray-200 text-xs text-gray-700 space-y-1">
+                <div className="flex items-center gap-2 font-bold text-forest-900">
+                  <Lock className="h-4 w-4 text-emerald-600" />
+                  <span>Jaminan Rekber Platform Jokiskripsiku:</span>
+                </div>
+                <p className="text-[11px] text-gray-600 leading-relaxed">
+                  Setelah Anda menyetujui penawaran harga di atas, dana pembayaran akan ditahan (HELD) di rekening bersama resmi kami (BCA 888 166 1730, SeaBank 901478587082, atau ShopeePay 087786720942 a.n ACEVA ARIE SADEWA). Dana TIDAK akan dicairkan ke penjoki sebelum Anda memeriksa draf dan memberikan persetujuan (ACC).
+                </p>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2.5">
+                <a
+                  href={`https://wa.me/62881010290185?text=Halo%20Admin%201%20Jokiskripsiku,%20saya%20ingin%20nego%20harga%20penawaran%20${formatRupiah(bids[0].bid_amount)}%20untuk%20pesanan%20${encodeURIComponent(project.title)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto font-semibold text-xs border-forest-200 text-forest-900">
+                    <MessageSquare className="h-3.5 w-3.5 mr-1 text-emerald-600" /> Nego Harga via WA
+                  </Button>
+                </a>
+
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleProceedPayment}
+                  isLoading={isAccepting}
+                  className="w-full sm:w-auto rounded-xl bg-forest-900 hover:bg-forest-800 font-bold px-6 shadow-sm"
+                >
+                  Setujui Harga {formatRupiah(bids[0].bid_amount)} &amp; Lanjut Bayar Rekber <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+              </div>
+            </div>
+          )
         ) : (
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">

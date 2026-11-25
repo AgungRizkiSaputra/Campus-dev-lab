@@ -16,31 +16,8 @@ export interface ChatMessage {
   created_at: string;
 }
 
-// In-memory mock messages for testing
-let mockMessages: Record<string, ChatMessage[]> = {
-  'demo-1': [
-    {
-      id: 'msg-1',
-      project_id: 'demo-1',
-      sender_id: 'user-buyer-1',
-      sender_name: 'Dimas Pratama',
-      sender_role: 'buyer',
-      content: 'Halo Pak Hendra, terima kasih sudah menerima asistensi Bab 3. Apakah sudah bisa mulai membaca pedoman penulisan dari fakultas?',
-      is_read: true,
-      created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'msg-2',
-      project_id: 'demo-1',
-      sender_id: 'user-seller-1',
-      sender_name: 'Dr. Hendra Wijaya',
-      sender_role: 'seller',
-      content: 'Halo Mas Dimas. Ya, draf awal dan pedoman sudah saya pelajari. Hari ini saya mulai susun kerangka arsitektur LSTM dan metode sampling dataset.',
-      is_read: true,
-      created_at: new Date(Date.now() - 40 * 60 * 60 * 1000).toISOString(),
-    },
-  ],
-};
+// In-memory messages store starting clean for real user testing
+let mockMessages: Record<string, ChatMessage[]> = {};
 
 export async function getChatMessagesAction(projectId: string) {
   const supabase = createClient();

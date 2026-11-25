@@ -1,10 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Bell, GraduationCap, User, LogOut, MessageCircle, Sparkles } from 'lucide-react';
+import {
+  Bell,
+  GraduationCap,
+  User,
+  LogOut,
+  MessageCircle,
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  ShieldCheck,
+  CreditCard,
+  FileCheck2,
+  X,
+} from 'lucide-react';
+import { getAppNotifications, markAllNotificationsAsRead, AppNotification } from '@/lib/notifications';
 
 interface HeaderProps {
   user?: {
@@ -18,6 +32,38 @@ interface HeaderProps {
 }
 
 export function Header({ user, onLogout }: HeaderProps) {
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const markAllAsRead = () => {
+    markAllNotificationsAsRead();
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  useEffect(() => {
+    const syncNotifs = () => {
+      setNotifications(getAppNotifications());
+    };
+    syncNotifs();
+    window.addEventListener('joki_notifications_updated', syncNotifs);
+    return () => window.removeEventListener('joki_notifications_updated', syncNotifs);
+  }, []);
+
+  // Close notifications popover on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setIsNotifOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const profileMenuItems = [
     {
       label: 'Profil Pengguna',
@@ -55,20 +101,110 @@ export function Header({ user, onLogout }: HeaderProps) {
         </span>
         <span className="text-gray-300">/</span>
         <span className="text-xs font-medium text-gray-500">
-          Solusi Tugas & Skripsi Anda — Selesai, Cepat, & Amanah
+          Solusi Tugas &amp; Skripsi Anda — Selesai, Cepat, &amp; Amanah
         </span>
       </div>
 
       {/* Right Actions */}
       <div className="flex items-center gap-4">
-        {/* Notification Bell */}
-        <button
-          className="relative rounded-full p-2 text-gray-500 hover:bg-forest-50 hover:text-forest-800 transition-colors"
-          aria-label="Notifikasi"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-burgundy-600 ring-2 ring-white" />
-        </button>
+        {/* Interactive Notification Bell Popover */}
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setIsNotifOpen(!isNotifOpen)}
+            className={`relative rounded-full p-2.5 text-gray-500 hover:bg-forest-50 hover:text-forest-800 transition-colors ${
+              isNotifOpen ? 'bg-forest-50 text-forest-900' : ''
+            }`}
+            aria-label="Buka Notifikasi"
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-burgundy-600 ring-2 ring-white animate-pulse" />
+            )}
+          </button>
+
+          {/* Notification Popover Dropdown */}
+          {isNotifOpen && (
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-gray-200 bg-white shadow-2xl z-50 text-left animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/70">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-serif font-bold text-sm text-gray-900">Pemberitahuan</h3>
+                  {unreadCount > 0 ? (
+                    <span className="px-2 py-0.5 rounded-full bg-burgundy-100 text-burgundy-800 text-[10px] font-bold">
+                      {unreadCount} Baru
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                      Semua Terbaca
+                    </span>
+                  )}
+                </div>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-[11px] font-semibold text-forest-800 hover:text-forest-950 hover:underline"
+                  >
+                    Tandai dibaca
+                  </button>
+                )}
+              </div>
+
+              {/* Notification Items List */}
+              <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400">
+                    <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-xs">Belum ada pemberitahuan baru.</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`p-3.5 transition-colors hover:bg-gray-50 flex items-start gap-3 ${
+                        !n.read ? 'bg-forest-50/30' : ''
+                      }`}
+                    >
+                      <div className="mt-0.5 flex-shrink-0">
+                        {n.type === 'payment' ? (
+                          <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                            <CreditCard className="h-4 w-4" />
+                          </div>
+                        ) : n.type === 'kyc' ? (
+                          <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
+                            <ShieldCheck className="h-4 w-4" />
+                          </div>
+                        ) : (
+                          <div className="h-8 w-8 rounded-lg bg-forest-100 text-forest-800 flex items-center justify-center">
+                            <FileCheck2 className="h-4 w-4" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <p className="text-xs font-bold text-gray-900 truncate">{n.title}</p>
+                          <span className="text-[10px] text-gray-400 whitespace-nowrap">{n.time}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-600 mt-0.5 leading-relaxed">
+                          {n.message}
+                        </p>
+                      </div>
+
+                      {!n.read && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-burgundy-600 flex-shrink-0 mt-2" />
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="p-2.5 bg-gray-50 text-center border-t border-gray-100">
+                <span className="text-[10px] text-gray-400 font-medium">
+                  Sistem Pemantauan Transaksi Rekber &bull; Jokiskripsiku
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {user ? (
           <div className="flex items-center gap-3 pl-3 border-l border-gray-200">

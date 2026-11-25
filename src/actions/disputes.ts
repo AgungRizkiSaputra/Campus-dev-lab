@@ -21,22 +21,7 @@ export interface DisputeTicket {
   resolved_at?: string | null;
 }
 
-let mockDisputes: DisputeTicket[] = [
-  {
-    id: 'dsp-882',
-    project_id: 'demo-1',
-    milestone_id: 'mile-2',
-    initiator_id: 'user-buyer-1',
-    initiator_name: 'Dimas Pratama (Mahasiswa)',
-    against_id: 'user-seller-1',
-    against_name: 'Dr. Hendra Wijaya (Joki)',
-    reason: 'PLAGIARISM_DETECTED',
-    description: 'Skor Turnitin pada draf Bab 3 terdeteksi 35%, melebihi batas toleransi fakultas yang maksimal 20%. Joki menolak melakukan parafrase ulang.',
-    evidence_url: 'https://storage.jokiskripsi.com/evidence/turnitin_screenshot_35.png',
-    status: 'OPEN',
-    created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-  },
-];
+let mockDisputes: DisputeTicket[] = [];
 
 export async function getDisputesAction() {
   return { success: true, disputes: mockDisputes };

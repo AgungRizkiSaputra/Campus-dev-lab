@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/toast';
 import { formatRupiah } from '@/lib/utils';
 import { projectWizardSchema, type ProjectWizardInput } from '@/lib/validations/project.schema';
 import { createProjectAction } from '@/actions/projects';
+import { getServiceConfig, type ServiceConfig } from '@/lib/services-config';
 import {
   BookOpen,
   FileText,
@@ -154,31 +155,29 @@ function CreateProjectForm() {
     topic: '',
     service_type: 'SKRIPSI',
     description: '',
-    budget_min: 1500000,
-    budget_max: 2500000,
+    budget_min: 1800000,
+    budget_max: 3500000,
     deadline: '',
     initial_draft_url: '',
-    milestones_count: 5,
+    milestones_count: 4,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const currentConfig = getServiceConfig(formData.service_type);
 
   // 1. Auto-select service from URL param if present
   useEffect(() => {
     const serviceParam = searchParams.get('service');
     if (serviceParam) {
-      const matched = serviceCatalog.find(
-        (s) => s.value.toLowerCase() === serviceParam.toLowerCase() || s.title.toLowerCase().includes(serviceParam.toLowerCase())
-      );
-      if (matched) {
-        setFormData((prev) => ({
-          ...prev,
-          service_type: matched.value as any,
-          budget_min: matched.minBudget,
-          budget_max: matched.maxBudget,
-          milestones_count: matched.defaultMilestones,
-        }));
-      }
+      const config = getServiceConfig(serviceParam);
+      setFormData((prev) => ({
+        ...prev,
+        service_type: config.value as any,
+        budget_min: config.minBudget,
+        budget_max: config.maxBudget,
+        milestones_count: config.defaultMilestones,
+      }));
     }
   }, [searchParams]);
 
@@ -220,12 +219,13 @@ function CreateProjectForm() {
   };
 
   const handleSelectService = (item: typeof serviceCatalog[0]) => {
+    const config = getServiceConfig(item.value);
     const updated = {
       ...formData,
       service_type: item.value as any,
-      budget_min: item.minBudget,
-      budget_max: item.maxBudget,
-      milestones_count: item.defaultMilestones,
+      budget_min: config.minBudget,
+      budget_max: config.maxBudget,
+      milestones_count: config.defaultMilestones,
     };
     setFormData(updated);
     saveDraft(updated);
@@ -299,13 +299,37 @@ function CreateProjectForm() {
 
       localStorage.removeItem(DRAFT_STORAGE_KEY);
 
+      // Save to client-side localStorage to guarantee immediate visibility
+      if (res.project) {
+        try {
+          const raw = localStorage.getItem('joki_user_projects');
+          const existing = raw ? JSON.parse(raw) : [];
+          let currentUserName = '';
+          const authRaw = localStorage.getItem('joki_auth_session');
+          if (authRaw) {
+            try {
+              currentUserName = JSON.parse(authRaw)?.name || '';
+            } catch {}
+          }
+          const projectWithBuyer = {
+            ...res.project,
+            student_name: currentUserName,
+            buyer_name: currentUserName,
+          };
+          const updated = [projectWithBuyer, ...existing.filter((p: any) => p.id !== res.project!.id)];
+          localStorage.setItem('joki_user_projects', JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+      }
+
       toast({
         type: 'success',
         title: 'Pesanan Berhasil Diajukan!',
         message: 'Pesanan Anda telah diteruskan langsung ke Tim Inti Jokiskripsiku.',
       });
 
-      router.push('/buyer');
+      router.push('/buyer/projects');
     } catch {
       toast({
         type: 'error',
@@ -465,17 +489,21 @@ function CreateProjectForm() {
           {currentStep === 2 && (
             <div className="space-y-5 animate-in fade-in-50">
               <div className="border-b border-gray-100 pb-3">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-forest-50 border border-forest-200 text-[10px] font-bold text-forest-800 mb-1.5">
+                  <Sparkles className="h-3 w-3 text-forest-700" />
+                  <span>Kategori: {currentConfig.name}</span>
+                </div>
                 <h2 className="font-serif text-lg font-bold text-gray-900">
-                  Instruksi Detail & Tautan Dokumen
+                  {currentConfig.step2Title}
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Jelaskan instruksi dari dosen atau ketentuan penulisan kampus Anda.
+                  {currentConfig.step2Desc}
                 </p>
               </div>
 
               <Input
-                label="Judul Tugas / Skripsi"
-                placeholder="Contoh: Analisis Kinerja Sistem dengan Algoritma Klasifikasi Random Forest"
+                label="Judul Tugas / Topik"
+                placeholder={currentConfig.titlePlaceholder}
                 value={formData.title}
                 onChange={(e) => updateField('title', e.target.value)}
                 error={errors.title}
@@ -490,7 +518,7 @@ function CreateProjectForm() {
                   rows={5}
                   value={formData.description}
                   onChange={(e) => updateField('description', e.target.value)}
-                  placeholder="Tuliskan instruksi lengkap: jumlah halaman/kata, metode yang diinginkan, data kuesioner yang sudah ada, atau bagian bab yang butuh asistensi..."
+                  placeholder={currentConfig.descPlaceholder}
                   className={`w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-forest-600 ${
                     errors.description ? 'border-red-500' : 'border-gray-300'
                   }`}
@@ -506,7 +534,7 @@ function CreateProjectForm() {
                 placeholder="https://drive.google.com/..."
                 value={formData.initial_draft_url || ''}
                 onChange={(e) => updateField('initial_draft_url', e.target.value)}
-                helperText="Link draf awal, jurnal acuan, atau pedoman penulisan kampus (pastikan akses terbuka)."
+                helperText={currentConfig.draftHelper}
               />
             </div>
           )}
@@ -516,10 +544,10 @@ function CreateProjectForm() {
             <div className="space-y-5 animate-in fade-in-50">
               <div className="border-b border-gray-100 pb-3">
                 <h2 className="font-serif text-lg font-bold text-gray-900">
-                  Estimasi Anggaran & Tenggat Waktu
+                  Estimasi Anggaran &amp; Tenggat Waktu
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Biaya bersifat bersahabat & negotiable. Tentukan rentang yang sesuai dengan kemampuan Anda.
+                  Rekomendasi biaya untuk <strong>{currentConfig.name}</strong>: {formatRupiah(currentConfig.minBudget)} – {formatRupiah(currentConfig.maxBudget)}.
                 </p>
               </div>
 
@@ -583,7 +611,7 @@ function CreateProjectForm() {
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Layanan Dipilih</span>
                     <h3 className="font-serif text-base font-bold text-forest-950">
-                      {serviceCatalog.find((s) => s.value === formData.service_type)?.title || formData.service_type}
+                      {currentConfig.name}
                     </h3>
                   </div>
                   <Badge variant="forest">Dikerjakan Tim Inti</Badge>
@@ -615,6 +643,26 @@ function CreateProjectForm() {
                   <p className="text-gray-700 bg-white p-3 rounded-lg border border-gray-200 leading-relaxed whitespace-pre-wrap">
                     {formData.description}
                   </p>
+                </div>
+
+                {/* DYNAMIC STAGES FOR SELECTED SERVICE */}
+                <div className="border-t border-gray-200/80 pt-3 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-forest-900">
+                    Rencana Tahap Pengerjaan ({currentConfig.name}):
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                    {currentConfig.stages.map((st) => (
+                      <div key={st.num} className="rounded-lg bg-white p-2.5 border border-gray-200 space-y-0.5">
+                        <div className="flex items-center gap-1.5 text-forest-900 font-bold text-xs">
+                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-forest-800 text-white text-[9px]">
+                            {st.num}
+                          </span>
+                          <span className="truncate">{st.title}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-tight">{st.desc}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 

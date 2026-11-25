@@ -11,7 +11,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
-import { formatDate } from '@/lib/utils';
+import { formatDate, downloadFileSafely } from '@/lib/utils';
 import { getSecureDocumentUrlAction } from '@/actions/documents';
 import {
   FileText,
@@ -42,38 +42,7 @@ export default function DocumentCenterPage() {
   const { toast } = useToast();
   const projectId = params.projectId as string;
 
-  const [documents, setDocuments] = useState<ProjectDocument[]>([
-    {
-      id: 'doc-1',
-      name: 'Pedoman_Penulisan_Skripsi_Fakultas_Teknik_2026.pdf',
-      path: 'guidelines/ft_2026.pdf',
-      size: '2.4 MB',
-      category: 'BRIEF',
-      uploader: 'Dimas Pratama',
-      role: 'buyer',
-      uploadedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'doc-2',
-      name: 'Draf_Bab_3_Metodologi_LSTM_v1.docx',
-      path: 'milestones/bab3_draft_v1.docx',
-      size: '1.8 MB',
-      category: 'DRAFT_INITIAL',
-      uploader: 'Tim Jokiskripsiku',
-      role: 'seller',
-      uploadedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'doc-3',
-      name: 'Hasil_Uji_Turnitin_Bab3_Sim_9persen.pdf',
-      path: 'turnitin/turnitin_bab3_report.pdf',
-      size: '850 KB',
-      category: 'PLAGIARISM_REPORT',
-      uploader: 'Tim Jokiskripsiku',
-      role: 'seller',
-      uploadedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ]);
+  const [documents, setDocuments] = useState<ProjectDocument[]>([]);
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploadCategory, setUploadCategory] = useState<'DRAFT_INITIAL' | 'REVISION' | 'FINAL_DELIVERABLE' | 'PLAGIARISM_REPORT'>('DRAFT_INITIAL');
@@ -81,26 +50,15 @@ export default function DocumentCenterPage() {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleDownload = async (doc: ProjectDocument) => {
-    toast({
-      type: 'info',
-      title: 'Menyiapkan Unduhan Aman',
-      message: `Mengunduh file terenkripsi ${doc.name}...`,
+    downloadFileSafely(doc.path, doc.name, {
+      projectTitle: `Pesanan #${projectId}`,
+      milestoneTitle: doc.category,
     });
-
-    try {
-      const res = await getSecureDocumentUrlAction(doc.path);
-      if (res.success && res.signedUrl) {
-        window.open(res.signedUrl, '_blank');
-      } else {
-        toast({
-          type: 'error',
-          title: 'Akses Ditolak',
-          message: 'Tautan unduh kedaluwarsa atau tidak memiliki izin akses.',
-        });
-      }
-    } catch {
-      toast({ type: 'error', title: 'Kesalahan Sistem', message: 'Gagal mengunduh dokumen' });
-    }
+    toast({
+      type: 'success',
+      title: 'Dokumen Berhasil Diunduh',
+      message: `File ${doc.name} telah disimpan ke perangkat Anda.`,
+    });
   };
 
   const handleUploadSubmit = (e: React.FormEvent) => {
@@ -199,38 +157,46 @@ export default function DocumentCenterPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {documents.map((doc) => (
-              <TableRow key={doc.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-muted text-forest-900">
-                      <FileText className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="font-semibold text-gray-900 text-xs block truncate max-w-xs sm:max-w-md">
-                        {doc.name}
-                      </span>
-                      <span className="text-[10px] text-gray-400">{doc.size}</span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>{getCategoryBadge(doc.category)}</TableCell>
-                <TableCell className="text-xs text-gray-600">
-                  <span className="font-medium text-gray-900">{doc.uploader}</span>
-                </TableCell>
-                <TableCell className="text-xs text-gray-500">{formatDate(doc.uploadedAt)}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownload(doc)}
-                    className="h-8 px-2.5 text-xs font-semibold"
-                  >
-                    <Download className="h-3.5 w-3.5 mr-1" /> Unduh
-                  </Button>
+            {documents.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-12 text-center text-xs text-gray-500">
+                  Belum ada dokumen atau draf Turnitin yang diunggah untuk pesanan ini.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              documents.map((doc) => (
+                <TableRow key={doc.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-muted text-forest-900">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-900 text-xs block truncate max-w-xs sm:max-w-md">
+                          {doc.name}
+                        </span>
+                        <span className="text-[10px] text-gray-400">{doc.size}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{getCategoryBadge(doc.category)}</TableCell>
+                  <TableCell className="text-xs text-gray-600">
+                    <span className="font-medium text-gray-900">{doc.uploader}</span>
+                  </TableCell>
+                  <TableCell className="text-xs text-gray-500">{formatDate(doc.uploadedAt)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(doc)}
+                      className="h-8 px-2.5 text-xs font-semibold"
+                    >
+                      <Download className="h-3.5 w-3.5 mr-1" /> Unduh
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </Card>

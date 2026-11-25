@@ -14,28 +14,7 @@ export interface PortfolioItem {
   created_at: string;
 }
 
-let mockPortfolios: PortfolioItem[] = [
-  {
-    id: 'port-1',
-    joki_id: 'user-seller-1',
-    title: 'Analisis Komparasi Kinerja Algoritma LSTM dan GRU pada Deteksi Anomali Jaringan',
-    major: 'Teknik Informatika',
-    description: 'Publikasi ilmiah dan kode implementasi Python PyTorch untuk evaluasi akurasi deteksi anomali paket jaringan.',
-    abstract_preview: 'Penelitian ini membandingkan konvergensi loss dan akurasi model recurrent neural network pada dataset CICIDS2017...',
-    sample_file_url: 'https://storage.jokiskripsi.com/samples/sample_lstm.pdf',
-    created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'port-2',
-    joki_id: 'user-seller-1',
-    title: 'Model Prediksi Nilai Tukar Rupiah dengan Metode ARIMA-GARCH',
-    major: 'Statistika / Matematika',
-    description: 'Pemodelan volatilitas runtun waktu finansial menggunakan software R dan EViews.',
-    abstract_preview: 'Penerapan model heteroskedastisitas bersyarat untuk mengestimasi risiko fluktuasi kurs mata uang asing...',
-    sample_file_url: 'https://storage.jokiskripsi.com/samples/sample_arima.pdf',
-    created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+let mockPortfolios: PortfolioItem[] = [];
 
 export async function getJokiPortfoliosAction(jokiId: string) {
   const list = mockPortfolios.filter((p) => p.joki_id === jokiId);

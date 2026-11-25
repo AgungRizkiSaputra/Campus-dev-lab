@@ -20,35 +20,7 @@ export interface KycSubmission {
   reviewed_at?: string | null;
 }
 
-let mockKycList: KycSubmission[] = [
-  {
-    id: 'kyc-1',
-    joki_id: 'user-seller-1',
-    joki_name: 'Dr. Hendra Wijaya, M.Kom',
-    university: 'Universitas Gadjah Mada',
-    major: 'Ilmu Komputer',
-    id_card_type: 'KTP',
-    id_card_number_masked: '3304**********01',
-    id_card_image_url: 'https://storage.jokiskripsi.com/kyc/ktp_hendra.jpg',
-    selfie_with_id_url: 'https://storage.jokiskripsi.com/kyc/selfie_hendra.jpg',
-    status: 'VERIFIED',
-    submitted_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    reviewed_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'kyc-2',
-    joki_id: 'user-seller-2',
-    joki_name: 'Ratna Kusuma, S.E., M.Acc',
-    university: 'Universitas Indonesia',
-    major: 'Akuntansi Keuangan',
-    id_card_type: 'KTP',
-    id_card_number_masked: '3171**********02',
-    id_card_image_url: 'https://storage.jokiskripsi.com/kyc/ktp_ratna.jpg',
-    selfie_with_id_url: 'https://storage.jokiskripsi.com/kyc/selfie_ratna.jpg',
-    status: 'PENDING',
-    submitted_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-];
+let mockKycList: KycSubmission[] = [];
 
 export async function submitKycAction(
   idCardNumberMasked: string,
